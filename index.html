@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>JOGO DE ADIVINHAÇÃO - Ultimate Edition</title>
+    <title>JOGO DE ADIVINHAÇÃO - Ultimate Edition 10 Leveis</title>
     <!-- SDKs DO FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -92,24 +92,24 @@
         #t0, #t1, #t-map, #t2, #t-res, #t-conquistas { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
         h1 { font-size: 52px; margin: 0 0 20px; color: var(--primary); text-shadow: 4px 4px 0 #305; font-weight: 900; text-align: center; }
         h3, h4, p { margin: 0 0 20px; text-align: center; }
-        h4 { font-size: 42px; margin-bottom: 5px; color: var(--secondary); }
+        h4 { font-size: 36px; margin-bottom: 5px; color: var(--secondary); }
         input { padding: 15px; width: 250px; font-size: 24px; text-align: center; background: #1a1a1a; border: 2px solid var(--primary); color: #fff; font-weight: bold; border-radius: 6px; outline: none; margin-bottom: 20px; }
         #chute { width: 160px; }
         button { padding: 12px 30px; font-size: 16px; cursor: pointer; background: var(--primary); color: #000; font-weight: bold; border-radius: 6px; text-transform: uppercase; border: none; transition: transform 0.1s; }
         button:hover { transform: scale(1.05); }
         
-        /* MAPA DE LEVELS */
-        .grid-levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; justify-items: center; margin-top: 20px; max-width: 380px; }
-        .card-level { width: 100px; height: 110px; background: #181818; border: 2px solid var(--primary); border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.2s, background 0.2s; position: relative; box-sizing: border-box; }
+        /* MAPA DE LEVELS (AJUSTADO PARA 10) */
+        .grid-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; margin-top: 10px; max-width: 580px; }
+        .card-level { width: 90px; height: 100px; background: #181818; border: 2px solid var(--primary); border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.2s, background 0.2s; position: relative; box-sizing: border-box; }
         .card-level:hover:not(.bloqueado) { transform: scale(1.08); background: #222; }
         .card-level.bloqueado { border-color: #444; background: #111; cursor: not-allowed; }
-        .card-level.bloqueado .cadeado-icon { font-size: 32px; opacity: 0.6; }
-        .card-level .num-lvl { font-size: 28px; font-weight: bold; color: var(--primary); }
-        .card-level .stars-lvl { font-size: 12px; margin-top: 5px; color: #ffd700; }
-        .card-level .tag-patente { font-size: 10px; margin-top: 2px; font-weight: bold; }
+        .card-level.bloqueado .cadeado-icon { font-size: 28px; opacity: 0.6; }
+        .card-level .num-lvl { font-size: 24px; font-weight: bold; color: var(--primary); }
+        .card-level .stars-lvl { font-size: 11px; margin-top: 3px; color: #ffd700; }
+        .card-level .tag-patente { font-size: 9px; margin-top: 2px; font-weight: bold; }
         
-        .card-level.lvl-6 { border-color: #ff0055; }
-        .card-level.lvl-6 .num-lvl { color: #ff0055; }
+        .card-level.lvl-10 { border-color: #ff0055; }
+        .card-level.lvl-10 .num-lvl { color: #ff0055; }
 
         /* RESULTADOS E CONQUISTAS */
         .card-resultado { background: #0b0b0b; border: 2px solid var(--primary); padding: 25px; border-radius: 12px; text-align: center; width: 320px; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
@@ -191,10 +191,11 @@
 
     <!-- TELA DO MAPA DE FASES -->
     <div id="t-map" style="display:none">
-        <h2>SELEÇÃO DE FASES</h2>
+        <h2>SELEÇÃO DE FASES (1-10)</h2>
         <div class="grid-levels" id="grid-levels"></div>
-        <div style="margin-top:20px; display:flex; gap:10px;">
+        <div style="margin-top:20px; display:flex; gap:10px; flex-wrap: wrap; justify-content: center;">
             <button onclick="abrirConquistas()">🏆 CONQUISTAS</button>
+            <button style="background: #ff0055; color: #fff;" onclick="limparRankingGlobal()">🗑️ RESETAR RANK</button>
             <button style="background: transparent; border: 1px solid #555; color: #888;" onclick="voltarMenu()">SAIR</button>
         </div>
     </div>
@@ -203,7 +204,7 @@
     <div id="t2" style="display:none">
         <div id="vez-player"></div>
         <div id="patente-player"></div>
-        <div id="timer-display">⏱️ TEMPO: <span id="tempo-restante">20</span>s</div>
+        <div id="timer-display">⏱️ TEMPO: <span id="tempo-restante">25</span>s</div>
         <h4 id="lvl">LEVEL 1</h4>
         <p id="instrucao">Adivinhe o número</p>
         <input type="number" id="chute" onkeydown="if(event.key==='Enter') chutar()">
@@ -236,7 +237,7 @@
 
 <!-- HISTÓRICO DE PALPITES E ESTATÍSTICAS (ESQUERDA) -->
 <div class="painel-chutes" id="painel-chutes">
-    <strong>📊 ESTATÍSTICAS DAS SESSÕES</strong>
+    <strong>📊 ESTATÍSTICAS</strong>
     <div id="stats-box" style="font-size:11px; margin-bottom:15px; color:#aaa; line-height:1.6;">
         Partidas: <span id="st-partidas" style="color:#fff">0</span> | Vitórias: <span id="st-vitorias" style="color:#00ff00">0</span><br>
         Taxa de Vitória: <span id="st-taxa" style="color:#ffd700">0%</span>
@@ -326,43 +327,52 @@
 
     const patentes = [
         { nome: "Sem Rank", icone: "❓", classe: "" },
-        { nome: "BRONZE", icone: "🥉", classe: "patente-1" },
-        { nome: "PRATA", icone: "🥈", classe: "patente-2" },
-        { nome: "OURO", icone: "🥇", classe: "patente-3" },
+        { nome: "BRONZE I", icone: "🥉", classe: "patente-1" },
+        { nome: "BRONZE II", icone: "🥉", classe: "patente-1" },
+        { nome: "PRATA I", icone: "🥈", classe: "patente-2" },
+        { nome: "PRATA II", icone: "🥈", classe: "patente-2" },
+        { nome: "OURO I", icone: "🥇", classe: "patente-3" },
+        { nome: "OURO II", icone: "🥇", classe: "patente-3" },
         { nome: "PLATINA", icone: "💎", classe: "patente-4" },
         { nome: "DIAMANTE", icone: "🔷", classe: "patente-5" },
-        { nome: "MESTRE", icone: "👑", classe: "patente-6" }
+        { nome: "ELITE", icone: "⭐", classe: "patente-5" },
+        { nome: "MESTRE SUPREMO", icone: "👑", classe: "patente-6" }
     ];
 
     const conquistasLista = [
         { id: "sniper", nome: "🎯 Sniper", desc: "Acertou um número de primeira!" },
         { id: "flash", nome: "⚡ Flash", desc: "Acertou em menos de 5 segundos!" },
         { id: "consumista", nome: "🛒 Consumista", desc: "Comprou um item na loja!" },
-        { id: "mestre", nome: "👑 Lenda Mestre", desc: "Alcançou a patente Mestre (Level 6)!" }
+        { id: "mestre", nome: "👑 Lenda Suprema", desc: "Alcançou a patente Mestre (Level 10)!" }
     ];
 
     let conquistasDesbloqueadas = new Set();
     let stats = { partidas: 0, vitorias: 0 };
 
+    // CONFIGURAÇÃO DOS 10 NÍVEIS
     const configuracaoNiveis = [
         null,
         { max: 15, chances: 8, tempoLimite: null },
-        { max: 30, chances: 8, tempoLimite: null },
-        { max: 45, chances: 7, tempoLimite: null },
-        { max: 60, chances: 7, tempoLimite: null },
-        { max: 80, chances: 6, tempoLimite: null },
-        { max: 100, chances: 6, tempoLimite: 20 }
+        { max: 25, chances: 8, tempoLimite: null },
+        { max: 40, chances: 7, tempoLimite: null },
+        { max: 55, chances: 7, tempoLimite: null },
+        { max: 70, chances: 6, tempoLimite: null },
+        { max: 85, chances: 6, tempoLimite: 30 },
+        { max: 100, chances: 6, tempoLimite: 25 },
+        { max: 115, chances: 5, tempoLimite: 20 },
+        { max: 130, chances: 5, tempoLimite: 15 },
+        { max: 150, chances: 5, tempoLimite: 12 }
     ];
 
     let lvl = 1, num = 0, ch = 0, maxNum = 10, moedas = 0, ativo = false;
     let modoAtual = 1, p1 = "", p2 = "", pVez = 1;
     let chutesNoLevel = 0, totalChutesGerais = 0;
-    let tempoInicio = 0, tempoGasto = 0, timerInterval = null, tempoRestanteLvl6 = 20;
+    let tempoInicio = 0, tempoGasto = 0, timerInterval = null, tempoRestanteLvl = 20;
     let historicoChutes = [];
 
     let progresso = {
         maxDesbloqueado: 1,
-        estrelas: { 1: "---", 2: "---", 3: "---", 4: "---", 5: "---", 6: "---" }
+        estrelas: { 1: "---", 2: "---", 3: "---", 4: "---", 5: "---", 6: "---", 7: "---", 8: "---", 9: "---", 10: "---" }
     };
 
     function $(id) { return document.getElementById(id); }
@@ -377,7 +387,7 @@
         snapshot.forEach((child) => { arrayValores.unshift(child.val()); });
         arrayValores.forEach((p, index) => {
             let scoreText = `🏆 ${p.score} ch.`;
-            let patInfo = patentes[6];
+            let patInfo = patentes[10];
 
             listaHTML += `<li class="podio-${index < 3 ? index : 'x'}">
                 <span>#${index+1} ${p.nome} <span class="${patInfo.classe}">${patInfo.icone}</span></span>
@@ -386,6 +396,14 @@
         });
         $("lista").innerHTML = listaHTML;
     });
+
+    function limparRankingGlobal() {
+        if (confirm("Tem certeza que deseja apagar todo o ranking global?")) {
+            db.ref("ranking").remove()
+                .then(() => alert("Ranking global resetado com sucesso!"))
+                .catch((error) => alert("Erro ao resetar: " + error.message));
+        }
+    }
 
     function selecionarModo(m) {
         somClique();
@@ -421,10 +439,10 @@
     function renderizarMapa() {
         let grid = $("grid-levels");
         grid.innerHTML = "";
-        for (let i = 1; i <= 6; i++) {
+        for (let i = 1; i <= 10; i++) {
             let desbloqueado = i <= progresso.maxDesbloqueado;
             let card = document.createElement("div");
-            card.className = `card-level ${desbloqueado ? '' : 'bloqueado'} ${i === 6 ? 'lvl-6' : ''}`;
+            card.className = `card-level ${desbloqueado ? '' : 'bloqueado'} ${i === 10 ? 'lvl-10' : ''}`;
             let pat = patentes[i];
 
             if (desbloqueado) {
@@ -460,12 +478,12 @@
 
         if (config.tempoLimite) {
             $("timer-display").style.display = "block";
-            tempoRestanteLvl6 = config.tempoLimite;
-            $("tempo-restante").textContent = tempoRestanteLvl6;
+            tempoRestanteLvl = config.tempoLimite;
+            $("tempo-restante").textContent = tempoRestanteLvl;
             timerInterval = setInterval(() => {
-                tempoRestanteLvl6--;
-                $("tempo-restante").textContent = tempoRestanteLvl6;
-                if (tempoRestanteLvl6 <= 0) { clearInterval(timerInterval); gameOverTempo(); }
+                tempoRestanteLvl--;
+                $("tempo-restante").textContent = tempoRestanteLvl;
+                if (tempoRestanteLvl <= 0) { clearInterval(timerInterval); gameOverTempo(); }
             }, 1000);
         } else {
             $("timer-display").style.display = "none";
@@ -486,7 +504,7 @@
     }
 
     function ui() {
-        $("lvl").textContent = `LEVEL ${lvl}/6`;
+        $("lvl").textContent = `LEVEL ${lvl}/10`;
         $("instrucao").textContent = `Adivinhe de 1 a ${maxNum}`;
         let patInfo = patentes[lvl];
         $("patente-player").innerHTML = `Patente em jogo: <span class="${patInfo.classe}">${patInfo.icone} ${patInfo.nome}</span>`;
@@ -556,7 +574,7 @@
 
             if (chutesNoLevel === 1) desbloquearConquista("sniper");
             if (tempoGasto < 5) desbloquearConquista("flash");
-            if (lvl === 6) desbloquearConquista("mestre");
+            if (lvl === 10) desbloquearConquista("mestre");
 
             historicoChutes.unshift({ numero: p, dica: "ACERTOU!" });
             atualizarPainelChutes();
@@ -622,7 +640,7 @@
         else if (ch >= Math.floor(config.chances * 0.3)) estrelas = "⭐⭐";
 
         progresso.estrelas[lvl] = estrelas;
-        if (lvl < 6 && progresso.maxDesbloqueado < lvl + 1) progresso.maxDesbloqueado = lvl + 1;
+        if (lvl < 10 && progresso.maxDesbloqueado < lvl + 1) progresso.maxDesbloqueado = lvl + 1;
 
         let patInfo = patentes[lvl];
         let vencedor = modoAtual === 2 ? (pVez === 1 ? p1 : p2) : p1;
@@ -633,9 +651,9 @@
         $("res-chutes").textContent = `🎯 Chutes Usados: ${chutesNoLevel}`;
         $("res-tempo").textContent = `⏱️ Tempo: ${tempoGasto}s`;
 
-        // Se o jogador zerou/venceu o Level 6 (o jogo todo), pede o nome personalizado para o ranking
-        if (lvl === 6) {
-            let nomePersonalizado = prompt("Parabéns por zerar o jogo! Escolha o nome/apelido que vai aparecer no RANKING GLOBAL:", vencedor);
+        // Se o jogador zerou/venceu o Level 10 (o jogo todo), pede o nome personalizado para o ranking
+        if (lvl === 10) {
+            let nomePersonalizado = prompt("Parabéns por zerar o jogo completo! Escolha o nome/apelido que vai aparecer no RANKING GLOBAL:", vencedor);
             if (!nomePersonalizado || nomePersonalizado.trim() === "") {
                 nomePersonalizado = vencedor;
             }
@@ -690,7 +708,7 @@
         $("t0").style.display = "flex";
         $("nick1").value = ""; $("nick2").value = "";
         progresso.maxDesbloqueado = 1;
-        progresso.estrelas = { 1: "---", 2: "---", 3: "---", 4: "---", 5: "---", 6: "---" };
+        progresso.estrelas = { 1: "---", 2: "---", 3: "---", 4: "---", 5: "---", 6: "---", 7: "---", 8: "---", 9: "---", 10: "---" };
     }
 </script>
 </body>
