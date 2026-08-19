@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>JOGO DE ADIVINHAÇÃO - Ultimate Edition 10 Leveis</title>
+    <title>JOGO DE ADIVINHAÇÃO - Edição Feira</title>
     <!-- SDKs DO FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -17,7 +17,6 @@
             --panel-bg: rgba(11, 11, 11, 0.92);
         }
 
-        /* TEMAS COLORIDOS */
         body.theme-cyberpunk { --primary: #ff0055; --secondary: #00ffff; }
         body.theme-matrix { --primary: #00ff66; --secondary: #003300; }
         body.theme-retro { --primary: #ffcc00; --secondary: #ff6600; }
@@ -55,7 +54,6 @@
             pointer-events: none; 
         }
         
-        /* PAINÉIS LATERAIS */
         .rank { 
             position: absolute;
             top: 25px;
@@ -89,16 +87,15 @@
             display: none;
         }
 
-        #t0, #t1, #t-map, #t2, #t-res, #t-conquistas { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+        #t0, #t1, #t-map, #t2, #t-res, #t-conquistas, #t-relampago { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
         h1 { font-size: 52px; margin: 0 0 20px; color: var(--primary); text-shadow: 4px 4px 0 #305; font-weight: 900; text-align: center; }
         h3, h4, p { margin: 0 0 15px; text-align: center; }
         h4 { font-size: 32px; margin-bottom: 5px; color: var(--secondary); }
         input { padding: 12px; width: 230px; font-size: 22px; text-align: center; background: #1a1a1a; border: 2px solid var(--primary); color: #fff; font-weight: bold; border-radius: 6px; outline: none; margin-bottom: 15px; }
-        #chute { width: 160px; }
+        #chute, #chute-relampago { width: 160px; }
         button { padding: 10px 25px; font-size: 15px; cursor: pointer; background: var(--primary); color: #000; font-weight: bold; border-radius: 6px; text-transform: uppercase; border: none; transition: transform 0.1s; }
         button:hover { transform: scale(1.05); }
         
-        /* MAPA DE 10 LEVELS (COMPACTO E ORGANIZADO EM 5 COLUNAS) */
         .grid-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; justify-items: center; margin-top: 5px; max-width: 500px; }
         .card-level { width: 85px; height: 85px; background: #181818; border: 2px solid var(--primary); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.2s, background 0.2s; position: relative; box-sizing: border-box; }
         .card-level:hover:not(.bloqueado) { transform: scale(1.05); background: #222; }
@@ -108,10 +105,6 @@
         .card-level .stars-lvl { font-size: 10px; margin-top: 2px; color: #ffd700; }
         .card-level .tag-patente { font-size: 8px; margin-top: 1px; font-weight: bold; }
         
-        .card-level.lvl-10 { border-color: #ff0055; }
-        .card-level.lvl-10 .num-lvl { color: #ff0055; }
-
-        /* RESULTADOS E CONQUISTAS */
         .card-resultado { background: #0b0b0b; border: 2px solid var(--primary); padding: 25px; border-radius: 12px; text-align: center; width: 320px; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
         .estrelas { font-size: 40px; margin: 10px 0; letter-spacing: 5px; color: #ffd700; }
         .info-res { font-size: 16px; margin: 8px 0; color: #fff; }
@@ -120,7 +113,6 @@
         .btn-loja:disabled { border-color: #333!important; color: #555!important; cursor: not-allowed; }
         #info-dica { text-align: center; font-weight: bold; margin-top: 10px; color: var(--primary); min-height: 25px; font-size: 13px; }
         
-        /* HUD TOPO */
         .hud-topo { position: absolute; top: 20px; left: 25px; display: flex; align-items: center; gap: 10px; z-index: 5; }
         .btn-hud { width: 45px; height: 45px; border-radius: 50%; background: #000; color: var(--primary); font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 2px solid var(--primary); transition: transform 0.2s; padding: 0; }
         .btn-hud:hover { transform: scale(1.1); }
@@ -137,7 +129,6 @@
         .dica-maior { color: #00ffaa; font-weight: bold; }
         .dica-menor { color: #ff9900; font-weight: bold; }
         
-        /* PATENTES */
         .badge-patente { display: inline-flex; align-items: center; gap: 4px; font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
         .patente-1 { color: #cd7f32; } .patente-2 { color: #c0c0c0; } .patente-3 { color: #ffd700; }
         .patente-4 { color: #00ffff; } .patente-5 { color: #1e90ff; } .patente-6 { color: #ff0055; text-shadow: 0 0 5px #ff0055; }
@@ -149,7 +140,6 @@
         #patente-player { font-size: 14px; margin-bottom: 15px; }
         #timer-display { font-size: 24px; font-weight: bold; color: #ff0000; display: none; margin-bottom: 10px; }
 
-        /* MODAIS DE LOJA E TEMAS */
         .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; }
         .modal-conteudo { background: #0b0b0b; border: 2px solid var(--primary); padding: 25px; border-radius: 8px; width: 330px; position: relative; }
         .fechar-modal { position: absolute; top: 10px; right: 15px; color: #fff; font-size: 24px; font-weight: bold; cursor: pointer; }
@@ -160,7 +150,6 @@
 <body class="theme-neon">
 
 <div class="box" id="painel-jogo">
-    <!-- BARRA SUPERIOR FIXA DA HUD -->
     <div class="hud-topo" id="hud-topo" style="display:none;">
         <button class="btn-hud" onclick="toggleLoja(true)" title="Loja">🛒</button>
         <button class="btn-hud" onclick="toggleTemaModal(true)" title="Skins de Tema">🎨</button>
@@ -174,9 +163,10 @@
     <!-- TELA 0: MODO DE JOGO -->
     <div id="t0">
         <h1 id="tit">JOGO DE<br>ADIVINHAÇÃO</h1>
-        <div style="margin-bottom:30px; text-transform:uppercase; text-align:center;">
-            <div class="btn-modo" onclick="selecionarModo(1)">&gt; 1 PLAYER</div>
-            <div class="btn-modo" style="color:var(--secondary);" onclick="selecionarModo(2)">&gt; 2 PLAYERS</div>
+        <div style="margin-bottom:20px; text-transform:uppercase; text-align:center;">
+            <div class="btn-modo" onclick="selecionarModo(1)">&gt; 1 PLAYER (CAMPANHA)</div>
+            <div class="btn-modo" style="color:var(--secondary);" onclick="selecionarModo(2)">&gt; 2 PLAYERS (DUELO)</div>
+            <div class="btn-modo" style="color:#ffd700;" onclick="iniciarModoRelampago()">&gt; ⚡ DESAFIO RELÂMPAGO (FEIRA)</div>
         </div>
         <div style="font-size:18px; font-weight:bold; color:var(--primary); animation:b 1.5s infinite; letter-spacing:3px;">ESCOLHA O MODO</div>
     </div>
@@ -195,12 +185,11 @@
         <div class="grid-levels" id="grid-levels"></div>
         <div style="margin-top:15px; display:flex; gap:10px; flex-wrap: wrap; justify-content: center;">
             <button onclick="abrirConquistas()">🏆 CONQUISTAS</button>
-            <button style="background: #ff0055; color: #fff;" onclick="limparRankingGlobal()">🗑️ RESETAR RANK</button>
             <button style="background: transparent; border: 1px solid #555; color: #888;" onclick="voltarMenu()">SAIR</button>
         </div>
     </div>
 
-    <!-- TELA 2: GAMEPLAY -->
+    <!-- TELA 2: GAMEPLAY CAMPANHA -->
     <div id="t2" style="display:none">
         <div id="vez-player"></div>
         <div id="patente-player"></div>
@@ -211,6 +200,19 @@
         <button id="btn-chutar" onclick="chutar()">CHUTAR</button>
         <p id="msg" style="font-weight:bold; min-height:30px; margin-top:15px; font-size:18px;"></p>
         <p id="status" style="margin:0;"></p>
+    </div>
+
+    <!-- TELA 3: DESAFIO RELÂMPAGO (FEIRA) -->
+    <div id="t-relampago" style="display:none">
+        <h2 style="color:#ffd700; margin-bottom:5px;">⚡ DESAFIO RELÂMPAGO</h2>
+        <p style="font-size:14px; color:#aaa;">Acerte o máximo de números possíveis em 60 segundos!</p>
+        <div style="font-size:28px; font-weight:bold; color:#ff0000; margin-bottom:10px;">⏳ <span id="relampago-tempo">60</span>s</div>
+        <div style="font-size:20px; font-weight:bold; color:#00ff00; margin-bottom:15px;">🎯 Acertos: <span id="relampago-pontos">0</span></div>
+        <h4 id="relampago-instrucao" style="color:var(--primary);">Adivinhe de 1 a 50</h4>
+        <input type="number" id="chute-relampago" onkeydown="if(event.key==='Enter') chutarRelampago()">
+        <button onclick="chutarRelampago()">CHUTAR</button>
+        <p id="msg-relampago" style="font-weight:bold; min-height:30px; margin-top:15px; font-size:18px;"></p>
+        <button style="margin-top:20px; background:transparent; border:1px solid #555; color:#888;" onclick="voltarMenu()">SAIR</button>
     </div>
 
     <!-- TELA RESULTADO -->
@@ -235,7 +237,6 @@
     </div>
 </div>
 
-<!-- HISTÓRICO DE PALPITES E ESTATÍSTICAS (ESQUERDA) -->
 <div class="painel-chutes" id="painel-chutes">
     <strong>📊 ESTATÍSTICAS</strong>
     <div id="stats-box" style="font-size:11px; margin-bottom:15px; color:#aaa; line-height:1.6;">
@@ -248,13 +249,11 @@
     </ul>
 </div>
 
-<!-- RANKING GLOBAL (DIREITA) -->
 <div class="rank" id="rank">
-    <strong>🌐 RANKING GLOBAL</strong>
+    <strong>🌐 RANKING DA FEIRA</strong>
     <ul id="lista"><li>Carregando...</li></ul>
 </div>
 
-<!-- MODAL LOJA NEON -->
 <div class="modal" id="modalLoja">
     <div class="modal-conteudo">
         <span class="fechar-modal" onclick="toggleLoja(false)">&times;</span>
@@ -268,7 +267,6 @@
     </div>
 </div>
 
-<!-- MODAL DE TEMAS / SKINS -->
 <div class="modal" id="modalTemas">
     <div class="modal-conteudo">
         <span class="fechar-modal" onclick="toggleTemaModal(false)">&times;</span>
@@ -281,7 +279,6 @@
 </div>
 
 <script>
-    // CONFIGURAÇÃO FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyC6NesXVh5ZcwH2_ceLS65AKu5AbingFZs",
       authDomain: "jogo-de-adivinhar-e8f79.firebaseapp.com",
@@ -294,7 +291,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // SINTETIZADOR DE SOM RETRÔ (WEB AUDIO API)
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
     let somAtivo = true;
@@ -349,7 +345,6 @@
     let conquistasDesbloqueadas = new Set();
     let stats = { partidas: 0, vitorias: 0 };
 
-    // CONFIGURAÇÃO DOS 10 NÍVEIS
     const configuracaoNiveis = [
         null,
         { max: 15, chances: 8, tempoLimite: null },
@@ -370,6 +365,13 @@
     let tempoInicio = 0, tempoGasto = 0, timerInterval = null, tempoRestanteLvl = 20;
     let historicoChutes = [];
 
+    // Variáveis para o Modo Relâmpago
+    let relampagoAtivo = false;
+    let relampagoPontos = 0;
+    let relampagoTempoRestante = 60;
+    let relampagoTimer = null;
+    let relampagoNumSecreto = 0;
+
     let progresso = {
         maxDesbloqueado: 1,
         estrelas: { 1: "---", 2: "---", 3: "---", 4: "---", 5: "---", 6: "---", 7: "---", 8: "---", 9: "---", 10: "---" }
@@ -386,24 +388,14 @@
         }
         snapshot.forEach((child) => { arrayValores.unshift(child.val()); });
         arrayValores.forEach((p, index) => {
-            let scoreText = `🏆 ${p.score} ch.`;
-            let patInfo = patentes[10];
-
+            let scoreText = p.modo === "relampago" ? `⚡ ${p.score} pts` : `🏆 ${p.score} ch.`;
             listaHTML += `<li class="podio-${index < 3 ? index : 'x'}">
-                <span>#${index+1} ${p.nome} <span class="${patInfo.classe}">${patInfo.icone}</span></span>
+                <span>#${index+1} ${p.nome}</span>
                 <span>${scoreText}</span>
             </li>`;
         });
         $("lista").innerHTML = listaHTML;
     });
-
-    function limparRankingGlobal() {
-        if (confirm("Tem certeza que deseja apagar todo o ranking global?")) {
-            db.ref("ranking").remove()
-                .then(() => alert("Ranking global resetado com sucesso!"))
-                .catch((error) => alert("Erro ao resetar: " + error.message));
-        }
-    }
 
     function selecionarModo(m) {
         somClique();
@@ -427,10 +419,81 @@
         irParaMapa();
     }
 
+    // --- MODO RELÂMPAGO PARA A FEIRA ---
+    function iniciarModoRelampago() {
+        somClique();
+        let nomeFeira = prompt("Digite seu nome para o Desafio Relâmpago:", "Visitante");
+        if (!nomeFeira || nomeFeira.trim() === "") nomeFeira = "Visitante";
+        p1 = nomeFeira.trim();
+
+        $("t0").style.display = "none";
+        $("t-relampago").style.display = "flex";
+        $("hud-topo").style.display = "none";
+
+        relampagoPontos = 0;
+        relampagoTempoRestante = 60;
+        $("relampago-pontos").textContent = relampagoPontos;
+        $("relampago-tempo").textContent = relampagoTempoRestante;
+        
+        proximaRodadaRelampago();
+
+        clearInterval(relampagoTimer);
+        relampagoTimer = setInterval(() => {
+            relampagoTempoRestante--;
+            $("relampago-tempo").textContent = relampagoTempoRestante;
+            if (relampagoTempoRestante <= 0) {
+                clearInterval(relampagoTimer);
+                fimModoRelampago();
+            }
+        }, 1000);
+    }
+
+    function proximaRodadaRelampago() {
+        relampagoNumSecreto = Math.floor(Math.random() * 50) + 1;
+        $("msg-relampago").textContent = "";
+        $("chute-relampago").value = "";
+        $("chute-relampago").focus();
+    }
+
+    function chutarRelampago() {
+        let chute = Number($("chute-relampago").value);
+        let msg = $("msg-relampago");
+        if (!chute) return;
+
+        if (chute === relampagoNumSecreto) {
+            somAcerto();
+            relampagoPontos++;
+            $("relampago-pontos").textContent = relampagoPontos;
+            msg.style.color = "#00ff00";
+            msg.textContent = "CORRETO! Próximo número...";
+            confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
+            setTimeout(proximaRodadaRelampago, 800);
+        } else {
+            somErro();
+            msg.style.color = "#ff0055";
+            msg.textContent = chute < relampagoNumSecreto ? "MAIOR ↑" : "MENOR ↓";
+            $("chute-relampago").value = "";
+            $("chute-relampago").focus();
+        }
+    }
+
+    function fimModoRelampago() {
+        somAcerto();
+        alert(`Tempo esgotado! Você fez ${relampagoPontos} pontos no Desafio Relâmpago!`);
+        db.ref("ranking").push({
+            nome: p1,
+            score: relampagoPontos,
+            modo: "relampago",
+            data: Date.now()
+        });
+        voltarMenu();
+    }
+
     function irParaMapa() {
         $("t2").style.display = "none";
         $("t-res").style.display = "none";
         $("t-conquistas").style.display = "none";
+        $("t-relampago").style.display = "none";
         $("painel-chutes").style.display = "none";
         $("t-map").style.display = "flex";
         renderizarMapa();
@@ -539,7 +602,7 @@
         }
         if (tipo === 5 && moedas >= 50) { 
             moedas -= 50; 
-            let mult = (num % 3 === 0) ? "3" : ((num % 5 === 0) ? "5" : "NENHUM (Não é mult de 3 nem 5)");
+            let mult = (num % 3 === 0) ? "3" : ((num % 5 === 0) ? "5" : "NENHUM");
             txt.textContent = `🔢 Múltiplo de: ${mult}`; 
         }
         if (tipo === 4 && moedas >= 80) { moedas -= 80; ch += 2; txt.textContent = `❤️ +2 CHANCES!`; $("status").textContent = `Chances: ${ch}`; }
@@ -590,7 +653,7 @@
                 $("btn-chutar").disabled = true;
                 stats.partidas++; atualizarStats();
                 m.style.color = "#ff0000"; 
-                m.textContent = `GAME OVER! ${jogadorAtual} errou no Level ${lvl}. Era ${num}.`;
+                m.textContent = `GAME OVER! ${jogadorAtual} errou. Era ${num}.`;
                 setTimeout(irParaMapa, 2500);
             } else {
                 m.style.color = "#00ffff"; m.textContent = dicaTexto;
@@ -651,28 +714,20 @@
         $("res-chutes").textContent = `🎯 Chutes Usados: ${chutesNoLevel}`;
         $("res-tempo").textContent = `⏱️ Tempo: ${tempoGasto}s`;
 
-        // Se o jogador zerou/venceu o Level 10 (o jogo todo), pede o nome personalizado para o ranking
         if (lvl === 10) {
-            let nomePersonalizado = prompt("Parabéns por zerar o jogo completo! Escolha o nome/apelido que vai aparecer no RANKING GLOBAL:", vencedor);
-            if (!nomePersonalizado || nomePersonalizado.trim() === "") {
-                nomePersonalizado = vencedor;
-            }
-            salvarRegistroGlobal(nomePersonalizado.trim(), totalChutesGerais);
+            let nomePersonalizado = prompt("Parabéns por zerar o jogo completo! Nome para o RANKING:", vencedor);
+            if (!nomePersonalizado || nomePersonalizado.trim() === "") nomePersonalizado = vencedor;
+            db.ref("ranking").push({
+                nome: nomePersonalizado.trim(),
+                score: totalChutesGerais,
+                modo: "campanha",
+                data: Date.now()
+            });
         }
-    }
-
-    function salvarRegistroGlobal(nome, chutesTotais) {
-        db.ref("ranking").push({
-            nome: nome,
-            score: chutesTotais,
-            data: Date.now()
-        });
     }
 
     function desbloquearConquista(id) {
-        if (!conquistasDesbloqueadas.has(id)) {
-            conquistasDesbloqueadas.add(id);
-        }
+        if (!conquistasDesbloqueadas.has(id)) conquistasDesbloqueadas.add(id);
     }
 
     function abrirConquistas() {
@@ -697,12 +752,14 @@
     function voltarMenu() {
         somClique();
         clearInterval(timerInterval);
+        clearInterval(relampagoTimer);
         ativo = false;
         toggleLoja(false);
         $("hud-topo").style.display = "none";
         $("t2").style.display = "none";
         $("t-res").style.display = "none";
         $("t-conquistas").style.display = "none";
+        $("t-relampago").style.display = "none";
         $("painel-chutes").style.display = "none";
         $("t-map").style.display = "none";
         $("t0").style.display = "flex";
