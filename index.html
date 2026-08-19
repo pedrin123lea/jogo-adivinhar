@@ -128,10 +128,6 @@
         .podio-2 { border-left: 4px solid #cd7f32; }
         .dica-maior { color: #00ffaa; font-weight: bold; }
         .dica-menor { color: #ff9900; font-weight: bold; }
-        
-        .badge-patente { display: inline-flex; align-items: center; gap: 4px; font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
-        .patente-1 { color: #cd7f32; } .patente-2 { color: #c0c0c0; } .patente-3 { color: #ffd700; }
-        .patente-4 { color: #00ffff; } .patente-5 { color: #1e90ff; } .patente-6 { color: #ff0055; text-shadow: 0 0 5px #ff0055; }
 
         strong { font-size: 14px; display: block; margin-bottom: 12px; text-align: center; color: #fff; letter-spacing: 1px; }
         .btn-modo { font-size:24px; font-weight:bold; color:var(--primary); margin-bottom:10px; cursor:pointer; }
@@ -250,7 +246,7 @@
 </div>
 
 <div class="rank" id="rank">
-    <strong>🌐 RANKING GLOBAL</strong>
+    <strong>⚡ RANKING RELÂMPAGO</strong>
     <ul id="lista"><li>Carregando...</li></ul>
 </div>
 
@@ -378,16 +374,21 @@
 
     function $(id) { return document.getElementById(id); }
 
-    db.ref("ranking").limitToLast(15).on("value", (snapshot) => {
+    // FILTRO PARA EXIBIR APENAS O MODO RELÂMPAGO NO RANKING
+    db.ref("ranking").orderByChild("modo").equalTo("relampago").limitToLast(15).on("value", (snapshot) => {
         let listaHTML = "";
         let arrayValores = [];
         if (!snapshot.exists()) {
             $("lista").innerHTML = '<li style="color:#555;text-align:center">Sem registros ainda</li>';
             return;
         }
-        snapshot.forEach((child) => { arrayValores.unshift(child.val()); });
+        snapshot.forEach((child) => { arrayValores.push(child.val()); });
+        
+        // Ordenar do maior para o menor score (pontos)
+        arrayValores.sort((a, b) => b.score - a.score);
+
         arrayValores.forEach((p, index) => {
-            let scoreText = p.modo === "relampago" ? `⚡ ${p.score} pts` : `🏆 ${p.score} ch.`;
+            let scoreText = `⚡ ${p.score} pts`;
             listaHTML += `<li class="podio-${index < 3 ? index : 'x'}">
                 <span>#${index+1} ${p.nome}</span>
                 <span>${scoreText}</span>
@@ -711,17 +712,6 @@
         $("res-patente").innerHTML = `🏅 Patente: <span class="${patInfo.classe}">${patInfo.icone} ${patInfo.nome}</span>`;
         $("res-chutes").textContent = `🎯 Chutes Usados: ${chutesNoLevel}`;
         $("res-tempo").textContent = `⏱️ Tempo: ${tempoGasto}s`;
-
-        if (lvl === 10) {
-            let nomePersonalizado = prompt("Parabéns por zerar o jogo completo! Nome para o RANKING:", vencedor);
-            if (!nomePersonalizado || nomePersonalizado.trim() === "") nomePersonalizado = vencedor;
-            db.ref("ranking").push({
-                nome: nomePersonalizado.trim(),
-                score: totalChutesGerais,
-                modo: "campanha",
-                data: Date.now()
-            });
-        }
     }
 
     function desbloquearConquista(id) {
