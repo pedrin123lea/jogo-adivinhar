@@ -14,7 +14,7 @@
             --primary: #00d8ff;
             --secondary: #ff00ff;
             --bg: #030303;
-            --panel-bg: rgba(11, 11, 11, 0.92);
+            --panel-bg: rgba(11, 11, 11, 0.95);
         }
 
         body.theme-cyberpunk { --primary: #ff0055; --secondary: #00ffff; }
@@ -54,20 +54,27 @@
             pointer-events: none; 
         }
         
-        .rank { 
+        /* PAINEL DE RANKINGS MULTIPLOS */
+        .painel-ranks { 
             position: absolute;
-            top: 25px;
-            right: 25px;
-            width: 250px; 
-            background: var(--panel-bg); 
-            border: 2px solid var(--primary); 
-            padding: 15px; 
-            border-radius: 10px;
-            box-sizing: border-box; 
-            max-height: 80vh; 
+            top: 20px;
+            right: 20px;
+            width: 280px; 
+            max-height: 90vh; 
             overflow-y: auto; 
             z-index: 5;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .rank-box {
+            background: var(--panel-bg); 
+            border: 2px solid var(--primary); 
+            padding: 10px 12px; 
+            border-radius: 8px;
+            box-sizing: border-box; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
         .painel-chutes { 
@@ -120,16 +127,19 @@
         .carteira-hud { background: rgba(11, 11, 11, 0.9); border: 2px solid #ffd700; color: #ffd700; padding: 6px 15px; border-radius: 25px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
         .moeda-redonda { width: 22px; height: 22px; background: radial-gradient(circle at 35% 35%, #ffe97d, #fbb021 60%, #c76f00 100%); border: 2px solid #fff59d; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #8c4a00; font-size: 12px; font-weight: 900; }
 
-        #lista, #lista-chutes, #lista-conquistas { padding: 0; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
-        #lista li, #lista-chutes li, #lista-conquistas li { display: flex; justify-content: space-between; gap: 10px; background: #181818; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.05); font-size: 12px; color: #ddd; align-items: center; }
+        .lista-rank { padding: 0; margin: 5px 0 0 0; list-style: none; display: flex; flex-direction: column; gap: 5px; max-height: 120px; overflow-y: auto; }
+        .lista-rank li, #lista-chutes li, #lista-conquistas li { display: flex; justify-content: space-between; gap: 10px; background: #181818; padding: 5px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,.05); font-size: 11px; color: #ddd; align-items: center; }
         
-        .podio-0 { border-left: 4px solid #ffd700; }
-        .podio-1 { border-left: 4px solid #c0c0c0; }
-        .podio-2 { border-left: 4px solid #cd7f32; }
+        #lista-chutes, #lista-conquistas { padding: 0; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        #lista-chutes li, #lista-conquistas li { padding: 8px 12px; font-size: 12px; }
+
+        .podio-0 { border-left: 3px solid #ffd700; }
+        .podio-1 { border-left: 3px solid #c0c0c0; }
+        .podio-2 { border-left: 3px solid #cd7f32; }
         .dica-maior { color: #00ffaa; font-weight: bold; }
         .dica-menor { color: #ff9900; font-weight: bold; }
 
-        strong { font-size: 14px; display: block; margin-bottom: 12px; text-align: center; color: #fff; letter-spacing: 1px; }
+        strong { font-size: 12px; display: block; margin-bottom: 4px; text-align: center; color: #fff; letter-spacing: 1px; }
         .btn-modo { font-size:24px; font-weight:bold; color:var(--primary); margin-bottom:10px; cursor:pointer; }
         .btn-modo:hover { text-shadow: 0 0 8px var(--primary); }
         #vez-player { font-size: 20px; font-weight: bold; margin-bottom: 5px; color: #ff0; }
@@ -245,9 +255,20 @@
     </ul>
 </div>
 
-<div class="rank" id="rank">
-    <strong>⚡ RANKING RELÂMPAGO</strong>
-    <ul id="lista"><li>Carregando...</li></ul>
+<!-- OS 3 RANKINGS NA TELA -->
+<div class="painel-ranks" id="painel-ranks">
+    <div class="rank-box">
+        <strong>🛡️ RANK: CAMPANHA (1P)</strong>
+        <ul id="lista-campanha" class="lista-rank"><li>Carregando...</li></ul>
+    </div>
+    <div class="rank-box">
+        <strong>⚔️ RANK: DUELO (2P)</strong>
+        <ul id="lista-duelo" class="lista-rank"><li>Carregando...</li></ul>
+    </div>
+    <div class="rank-box">
+        <strong>⚡ RANK: RELÂMPAGO</strong>
+        <ul id="lista-relampago" class="lista-rank"><li>Carregando...</li></ul>
+    </div>
 </div>
 
 <div class="modal" id="modalLoja">
@@ -361,7 +382,6 @@
     let tempoInicio = 0, tempoGasto = 0, timerInterval = null, tempoRestanteLvl = 20;
     let historicoChutes = [];
 
-    let relampagoAtivo = false;
     let relampagoPontos = 0;
     let relampagoTempoRestante = 60;
     let relampagoTimer = null;
@@ -374,28 +394,43 @@
 
     function $(id) { return document.getElementById(id); }
 
-    // FILTRO PARA EXIBIR APENAS O MODO RELÂMPAGO NO RANKING
-    db.ref("ranking").orderByChild("modo").equalTo("relampago").limitToLast(15).on("value", (snapshot) => {
-        let listaHTML = "";
-        let arrayValores = [];
+    // CARREGAR OS 3 RANKINGS SEPARADOS DO FIREBASE
+    function carregarRankings() {
+        // 1. Campanha
+        db.ref("ranking").orderByChild("modo").equalTo("campanha").limitToLast(5).on("value", (snapshot) => {
+            preencherListaRank(snapshot, "lista-campanha", "pts");
+        });
+        // 2. Duelo
+        db.ref("ranking").orderByChild("modo").equalTo("duelo").limitToLast(5).on("value", (snapshot) => {
+            preencherListaRank(snapshot, "lista-duelo", "pts");
+        });
+        // 3. Relâmpago
+        db.ref("ranking").orderByChild("modo").equalTo("relampago").limitToLast(5).on("value", (snapshot) => {
+            preencherListaRank(snapshot, "lista-relampago", "pts");
+        });
+    }
+
+    function preencherListaRank(snapshot, elementId, unidade) {
+        let el = $(elementId);
         if (!snapshot.exists()) {
-            $("lista").innerHTML = '<li style="color:#555;text-align:center">Sem registros ainda</li>';
+            el.innerHTML = '<li style="color:#555;text-align:center">Sem registros</li>';
             return;
         }
+        let arrayValores = [];
         snapshot.forEach((child) => { arrayValores.push(child.val()); });
-        
-        // Ordenar do maior para o menor score (pontos)
         arrayValores.sort((a, b) => b.score - a.score);
 
+        let html = "";
         arrayValores.forEach((p, index) => {
-            let scoreText = `⚡ ${p.score} pts`;
-            listaHTML += `<li class="podio-${index < 3 ? index : 'x'}">
+            html += `<li class="podio-${index < 3 ? index : 'x'}">
                 <span>#${index+1} ${p.nome}</span>
-                <span>${scoreText}</span>
+                <span>${p.score} ${unidade}</span>
             </li>`;
         });
-        $("lista").innerHTML = listaHTML;
-    });
+        el.innerHTML = html;
+    }
+
+    carregarRankings();
 
     function selecionarModo(m) {
         somClique();
@@ -638,6 +673,16 @@
             if (tempoGasto < 5) desbloquearConquista("flash");
             if (lvl === 10) desbloquearConquista("mestre");
 
+            // Salvar no Ranking do Firebase de acordo com o modo
+            let modoStr = modoAtual === 1 ? "campanha" : "duelo";
+            let pontuacaoFinal = Math.max(10, 100 - (chutesNoLevel * 5) - (tempoGasto));
+            db.ref("ranking").push({
+                nome: jogadorAtual,
+                score: pontuacaoFinal,
+                modo: modoStr,
+                data: Date.now()
+            });
+
             historicoChutes.unshift({ numero: p, dica: "ACERTOU!" });
             atualizarPainelChutes();
             exibirResultadoLevel();
@@ -705,7 +750,6 @@
         if (lvl < 10 && progresso.maxDesbloqueado < lvl + 1) progresso.maxDesbloqueado = lvl + 1;
 
         let patInfo = patentes[lvl];
-        let vencedor = modoAtual === 2 ? (pVez === 1 ? p1 : p2) : p1;
         
         $("res-titulo").textContent = `LEVEL ${lvl} CONCLUÍDO!`;
         $("res-estrelas").textContent = estrelas;
