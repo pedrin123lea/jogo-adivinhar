@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>JOGO DE ADIVINHAÇÃO - Edição Feira</title>
+    <title>JOGO DE ADIVINHAÇÃO - Ultimate Edition</title>
     <!-- SDKs DO FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -166,7 +166,7 @@
         <div style="margin-bottom:20px; text-transform:uppercase; text-align:center;">
             <div class="btn-modo" onclick="selecionarModo(1)">&gt; 1 PLAYER (CAMPANHA)</div>
             <div class="btn-modo" style="color:var(--secondary);" onclick="selecionarModo(2)">&gt; 2 PLAYERS (DUELO)</div>
-            <div class="btn-modo" style="color:#ffd700;" onclick="iniciarModoRelampago()">&gt; ⚡ DESAFIO RELÂMPAGO (FEIRA)</div>
+            <div class="btn-modo" style="color:#ffd700;" onclick="iniciarModoRelampago()">&gt; ⚡ DESAFIO RELÂMPAGO</div>
         </div>
         <div style="font-size:18px; font-weight:bold; color:var(--primary); animation:b 1.5s infinite; letter-spacing:3px;">ESCOLHA O MODO</div>
     </div>
@@ -202,7 +202,7 @@
         <p id="status" style="margin:0;"></p>
     </div>
 
-    <!-- TELA 3: DESAFIO RELÂMPAGO (FEIRA) -->
+    <!-- TELA 3: DESAFIO RELÂMPAGO -->
     <div id="t-relampago" style="display:none">
         <h2 style="color:#ffd700; margin-bottom:5px;">⚡ DESAFIO RELÂMPAGO</h2>
         <p style="font-size:14px; color:#aaa;">Acerte o máximo de números possíveis em 60 segundos!</p>
@@ -250,7 +250,7 @@
 </div>
 
 <div class="rank" id="rank">
-    <strong>🌐 RANKING DA FEIRA</strong>
+    <strong>🌐 RANKING GLOBAL</strong>
     <ul id="lista"><li>Carregando...</li></ul>
 </div>
 
@@ -365,7 +365,6 @@
     let tempoInicio = 0, tempoGasto = 0, timerInterval = null, tempoRestanteLvl = 20;
     let historicoChutes = [];
 
-    // Variáveis para o Modo Relâmpago
     let relampagoAtivo = false;
     let relampagoPontos = 0;
     let relampagoTempoRestante = 60;
@@ -419,12 +418,11 @@
         irParaMapa();
     }
 
-    // --- MODO RELÂMPAGO PARA A FEIRA ---
     function iniciarModoRelampago() {
         somClique();
-        let nomeFeira = prompt("Digite seu nome para o Desafio Relâmpago:", "Visitante");
-        if (!nomeFeira || nomeFeira.trim() === "") nomeFeira = "Visitante";
-        p1 = nomeFeira.trim();
+        let nomeJogador = prompt("Digite seu nome para o Desafio Relâmpago:", "Visitante");
+        if (!nomeJogador || nomeJogador.trim() === "") nomeJogador = "Visitante";
+        p1 = nomeJogador.trim();
 
         $("t0").style.display = "none";
         $("t-relampago").style.display = "flex";
