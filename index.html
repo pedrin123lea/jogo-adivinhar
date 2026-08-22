@@ -2,497 +2,803 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo de Adivinhar</title>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- Canvas Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <title>JOGO DE ADIVINHAÇÃO - Ultimate Edition</title>
+    <!-- SDKs DO FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- CANVAS CONFETTI -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Courier New', Courier, monospace, sans-serif;
+        :root {
+            --primary: #00d8ff;
+            --secondary: #ff00ff;
+            --bg: #030303;
+            --panel-bg: rgba(11, 11, 11, 0.95);
         }
 
-        body {
-            background-color: #000000;
-            color: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+        body.theme-cyberpunk { --primary: #ff0055; --secondary: #00ffff; }
+        body.theme-matrix { --primary: #00ff66; --secondary: #003300; }
+        body.theme-retro { --primary: #ffcc00; --secondary: #ff6600; }
+
+        body { 
+            font-family: monospace; 
+            margin: 0; 
+            background: var(--bg); 
+            color: var(--primary); 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
             position: relative;
+            transition: color 0.3s ease;
+        }
+        
+        .box { 
+            width: 100%; 
+            height: 100vh; 
+            background: #111; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            position: relative; 
+            box-sizing: border-box; 
+        }
+        .box::after { 
+            content: " "; 
+            display: block; 
+            position: absolute; 
+            top: 0; left: 0; bottom: 0; right: 0; 
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%); 
+            background-size: 100% 4px; 
+            pointer-events: none; 
+        }
+        
+        /* PAINEL DE RANKINGS MULTIPLOS */
+        .painel-ranks { 
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 280px; 
+            max-height: 90vh; 
+            overflow-y: auto; 
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        /* TOPO: Carrinho e Moedas */
-        .topo-esquerda {
+        .rank-box {
+            background: var(--panel-bg); 
+            border: 2px solid var(--primary); 
+            padding: 10px 12px; 
+            border-radius: 8px;
+            box-sizing: border-box; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .painel-chutes { 
             position: absolute;
-            top: 25px;
+            top: 95px;
             left: 25px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .btn-carrinho {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: 2px solid #00d8ff;
-            background: #000;
-            color: #00d8ff;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 10px rgba(0, 216, 255, 0.3);
-        }
-
-        .hud-moedas {
-            border: 2px solid #ffcc00;
-            border-radius: 20px;
-            padding: 5px 15px;
-            background: #000;
-            color: #ffcc00;
-            font-weight: bold;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
-        }
-
-        /* TOPO DIR: Top Recordes */
-        .topo-direita {
-            position: absolute;
-            top: 25px;
-            right: 25px;
-            width: 220px;
-        }
-
-        .box-recordes {
-            border: 2px solid #00d8ff;
+            width: 230px; 
+            background: var(--panel-bg); 
+            border: 2px solid var(--primary); 
+            padding: 15px; 
             border-radius: 10px;
-            padding: 10px;
-            background: #000;
-            box-shadow: 0 0 10px rgba(0, 216, 255, 0.2);
-        }
-
-        .titulo-recordes {
-            color: #ffcc00;
-            font-size: 13px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            letter-spacing: 1px;
-        }
-
-        .content-recordes {
-            background: #111;
-            border: 1px solid #222;
-            border-radius: 5px;
-            padding: 8px;
-            min-height: 45px;
-            font-size: 11px;
-            color: #666;
-            text-align: center;
-        }
-
-        .content-recordes li {
-            list-style: none;
-            display: flex;
-            justify-content: space-between;
-            color: #aaa;
-            margin-bottom: 3px;
-        }
-
-        /* CONTAINER CENTRAL */
-        .main-container {
-            width: 100%;
-            max-width: 450px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .titulo-secao {
-            color: #00d8ff;
-            font-size: 22px;
-            letter-spacing: 2px;
-            font-weight: bold;
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        /* GRID DE FASES (3 COLUNAS) */
-        .grid-fases {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            width: 100%;
-            max-width: 360px;
-        }
-
-        .card-fase {
-            aspect-ratio: 1;
-            background: #000;
-            border: 2px solid #222;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            gap: 4px;
-            transition: all 0.2s;
-        }
-
-        .card-fase.ativa {
-            border-color: #00d8ff;
-            box-shadow: 0 0 12px rgba(0, 216, 255, 0.4);
-        }
-
-        .num-fase {
-            font-size: 26px;
-            font-weight: bold;
-            color: #00d8ff;
-        }
-
-        .icone-fase {
-            font-size: 22px;
-            color: #ffcc00;
-        }
-
-        .sub-fase {
-            color: #ffcc00;
-            font-size: 12px;
-        }
-
-        /* BOTÕES DE MENU E AÇÕES */
-        .btn-acao {
-            background: #000;
-            border: 2px solid #00d8ff;
-            color: #00d8ff;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            letter-spacing: 1px;
-            width: 100%;
-            text-transform: uppercase;
-            transition: 0.2s;
-        }
-
-        .btn-acao:hover {
-            background: #00d8ff;
-            color: #000;
-        }
-
-        .btn-secundario {
-            border-color: #333;
-            color: #aaa;
-        }
-
-        .btn-secundario:hover {
-            border-color: #fff;
-            color: #fff;
-            background: transparent;
-        }
-
-        /* INPUTS */
-        input[type="text"], input[type="number"] {
-            background: #000;
-            border: 2px solid #00d8ff;
-            border-radius: 8px;
-            color: #fff;
-            padding: 12px;
-            font-size: 16px;
-            text-align: center;
-            outline: none;
-            width: 100%;
-        }
-
-        .modal-loja {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
+            box-sizing: border-box; 
+            max-height: 70vh; 
+            overflow-y: auto; 
+            z-index: 5;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
             display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            z-index: 100;
-            padding: 20px;
         }
+
+        #t0, #t1, #t-map, #t2, #t-res, #t-conquistas, #t-relampago { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+        h1 { font-size: 52px; margin: 0 0 20px; color: var(--primary); text-shadow: 4px 4px 0 #305; font-weight: 900; text-align: center; }
+        h3, h4, p { margin: 0 0 15px; text-align: center; }
+        h4 { font-size: 32px; margin-bottom: 5px; color: var(--secondary); }
+        input { padding: 12px; width: 230px; font-size: 22px; text-align: center; background: #1a1a1a; border: 2px solid var(--primary); color: #fff; font-weight: bold; border-radius: 6px; outline: none; margin-bottom: 15px; }
+        #chute, #chute-relampago { width: 160px; }
+        button { padding: 10px 25px; font-size: 15px; cursor: pointer; background: var(--primary); color: #000; font-weight: bold; border-radius: 6px; text-transform: uppercase; border: none; transition: transform 0.1s; }
+        button:hover { transform: scale(1.05); }
+        
+        .grid-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; justify-items: center; margin-top: 5px; max-width: 500px; }
+        .card-level { width: 85px; height: 85px; background: #181818; border: 2px solid var(--primary); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.2s, background 0.2s; position: relative; box-sizing: border-box; }
+        .card-level:hover:not(.bloqueado) { transform: scale(1.05); background: #222; }
+        .card-level.bloqueado { border-color: #444; background: #111; cursor: not-allowed; }
+        .card-level.bloqueado .cadeado-icon { font-size: 22px; opacity: 0.6; }
+        .card-level .num-lvl { font-size: 22px; font-weight: bold; color: var(--primary); }
+        .card-level .stars-lvl { font-size: 10px; margin-top: 2px; color: #ffd700; }
+        .card-level .tag-patente { font-size: 8px; margin-top: 1px; font-weight: bold; }
+        
+        .card-resultado { background: #0b0b0b; border: 2px solid var(--primary); padding: 25px; border-radius: 12px; text-align: center; width: 320px; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        .estrelas { font-size: 40px; margin: 10px 0; letter-spacing: 5px; color: #ffd700; }
+        .info-res { font-size: 16px; margin: 8px 0; color: #fff; }
+
+        .btn-loja { width: 100%; padding: 10px; font-size: 11px; margin-top: 8px; background: transparent; border: 1px solid var(--primary); color: var(--primary); cursor: pointer; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
+        .btn-loja:disabled { border-color: #333!important; color: #555!important; cursor: not-allowed; }
+        #info-dica { text-align: center; font-weight: bold; margin-top: 10px; color: var(--primary); min-height: 25px; font-size: 13px; }
+        
+        .hud-topo { position: absolute; top: 20px; left: 25px; display: flex; align-items: center; gap: 10px; z-index: 5; }
+        .btn-hud { width: 45px; height: 45px; border-radius: 50%; background: #000; color: var(--primary); font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 2px solid var(--primary); transition: transform 0.2s; padding: 0; }
+        .btn-hud:hover { transform: scale(1.1); }
+        
+        .carteira-hud { background: rgba(11, 11, 11, 0.9); border: 2px solid #ffd700; color: #ffd700; padding: 6px 15px; border-radius: 25px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .moeda-redonda { width: 22px; height: 22px; background: radial-gradient(circle at 35% 35%, #ffe97d, #fbb021 60%, #c76f00 100%); border: 2px solid #fff59d; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #8c4a00; font-size: 12px; font-weight: 900; }
+
+        .lista-rank { padding: 0; margin: 5px 0 0 0; list-style: none; display: flex; flex-direction: column; gap: 5px; max-height: 120px; overflow-y: auto; }
+        .lista-rank li, #lista-chutes li, #lista-conquistas li { display: flex; justify-content: space-between; gap: 10px; background: #181818; padding: 5px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,.05); font-size: 11px; color: #ddd; align-items: center; }
+        
+        #lista-chutes, #lista-conquistas { padding: 0; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        #lista-chutes li, #lista-conquistas li { padding: 8px 12px; font-size: 12px; }
+
+        .podio-0 { border-left: 3px solid #ffd700; }
+        .podio-1 { border-left: 3px solid #c0c0c0; }
+        .podio-2 { border-left: 3px solid #cd7f32; }
+        .dica-maior { color: #00ffaa; font-weight: bold; }
+        .dica-menor { color: #ff9900; font-weight: bold; }
+
+        strong { font-size: 12px; display: block; margin-bottom: 4px; text-align: center; color: #fff; letter-spacing: 1px; }
+        .btn-modo { font-size:24px; font-weight:bold; color:var(--primary); margin-bottom:10px; cursor:pointer; }
+        .btn-modo:hover { text-shadow: 0 0 8px var(--primary); }
+        #vez-player { font-size: 20px; font-weight: bold; margin-bottom: 5px; color: #ff0; }
+        #patente-player { font-size: 14px; margin-bottom: 15px; }
+        #timer-display { font-size: 24px; font-weight: bold; color: #ff0000; display: none; margin-bottom: 10px; }
+
+        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; }
+        .modal-conteudo { background: #0b0b0b; border: 2px solid var(--primary); padding: 25px; border-radius: 8px; width: 330px; position: relative; }
+        .fechar-modal { position: absolute; top: 10px; right: 15px; color: #fff; font-size: 24px; font-weight: bold; cursor: pointer; }
+        
+        @keyframes b { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
     </style>
 </head>
-<body>
+<body class="theme-neon">
 
-    <!-- HUD TOPO -->
-    <div class="topo-esquerda" id="hud-topo" style="display: none;">
-        <button class="btn-carrinho" onclick="toggleLoja(true)">🛒</button>
-        <div class="hud-moedas">
-            <span style="background: #ffcc00; color: #000; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">$</span>
+<div class="box" id="painel-jogo">
+    <div class="hud-topo" id="hud-topo" style="display:none;">
+        <button class="btn-hud" onclick="toggleLoja(true)" title="Loja">🛒</button>
+        <button class="btn-hud" onclick="toggleTemaModal(true)" title="Skins de Tema">🎨</button>
+        <button class="btn-hud" id="btn-som" onclick="toggleSom()" title="Som On/Off">🔊</button>
+        <div class="carteira-hud" id="carteira">
+            <div class="moeda-redonda">$</div>
             <span id="saldo-moedas">0</span>
         </div>
     </div>
 
-    <div class="topo-direita">
-        <div class="box-recordes">
-            <div class="titulo-recordes">🏆 TOP RECORDES</div>
-            <div class="content-recordes" id="lista-recordes">
-                Sem recordes
-            </div>
+    <!-- TELA 0: MODO DE JOGO -->
+    <div id="t0">
+        <h1 id="tit">JOGO DE<br>ADIVINHAÇÃO</h1>
+        <div style="margin-bottom:20px; text-transform:uppercase; text-align:center;">
+            <div class="btn-modo" onclick="selecionarModo(1)">&gt; 1 PLAYER (CAMPANHA)</div>
+            <div class="btn-modo" style="color:var(--secondary);" onclick="selecionarModo(2)">&gt; 2 PLAYERS (DUELO)</div>
+            <div class="btn-modo" style="color:#ffd700;" onclick="iniciarModoRelampago()">&gt; ⚡ DESAFIO RELÂMPAGO</div>
+        </div>
+        <div style="font-size:18px; font-weight:bold; color:var(--primary); animation:b 1.5s infinite; letter-spacing:3px;">ESCOLHA O MODO</div>
+    </div>
+
+    <!-- TELA 1: LOGIN -->
+    <div id="t1" style="display:none">
+        <h3 id="titulo-login">SEU NOME</h3>
+        <input type="text" id="nick1" placeholder="PLAYER 1" onkeydown="if(event.key==='Enter') logar()" autocomplete="off">
+        <input type="text" id="nick2" placeholder="PLAYER 2" style="display:none" onkeydown="if(event.key==='Enter') logar()" autocomplete="off">
+        <button onclick="logar()">CONTINUAR</button>
+    </div>
+
+    <!-- TELA DO MAPA DE FASES -->
+    <div id="t-map" style="display:none">
+        <h2 style="margin-bottom: 10px;">SELEÇÃO DE FASES (1-10)</h2>
+        <div class="grid-levels" id="grid-levels"></div>
+        <div style="margin-top:15px; display:flex; gap:10px; flex-wrap: wrap; justify-content: center;">
+            <button onclick="abrirConquistas()">🏆 CONQUISTAS</button>
+            <button style="background: transparent; border: 1px solid #555; color: #888;" onclick="voltarMenu()">SAIR</button>
         </div>
     </div>
 
-    <!-- TELA 0: INÍCIO / MENU PRINCIPAL -->
-    <div class="main-container" id="tela-inicio">
-        <div class="titulo-secao">ADIVINHE O NÚMERO</div>
-        <button class="btn-acao" onclick="selecionarModo(1)">Modo Campanha</button>
-        <button class="btn-acao" onclick="selecionarModo(2)">Modo Duelo 1v1</button>
-        <button class="btn-acao" style="border-color: #ffcc00; color: #ffcc00;" onclick="iniciarRelampago()">Modo Relâmpago ⚡</button>
+    <!-- TELA 2: GAMEPLAY CAMPANHA -->
+    <div id="t2" style="display:none">
+        <div id="vez-player"></div>
+        <div id="patente-player"></div>
+        <div id="timer-display">⏱️ TEMPO: <span id="tempo-restante">25</span>s</div>
+        <h4 id="lvl">LEVEL 1</h4>
+        <p id="instrucao">Adivinhe o número</p>
+        <input type="number" id="chute" onkeydown="if(event.key==='Enter') chutar()">
+        <button id="btn-chutar" onclick="chutar()">CHUTAR</button>
+        <p id="msg" style="font-weight:bold; min-height:30px; margin-top:15px; font-size:18px;"></p>
+        <p id="status" style="margin:0;"></p>
     </div>
 
-    <!-- TELA 1: NOME / LOGIN -->
-    <div class="main-container" id="tela-login" style="display: none;">
-        <div class="titulo-secao" id="titulo-login">SEU NOME</div>
-        <input type="text" id="nick1" placeholder="Nome Jogador 1" maxlength="12">
-        <input type="text" id="nick2" placeholder="Nome Jogador 2" maxlength="12" style="display: none;">
-        <button class="btn-acao" onclick="iniciarJogo()">JOGAR</button>
-        <button class="btn-acao btn-secundario" onclick="voltarMenu()">VOLTAR</button>
+    <!-- TELA 3: DESAFIO RELÂMPAGO -->
+    <div id="t-relampago" style="display:none">
+        <h2 style="color:#ffd700; margin-bottom:5px;">⚡ DESAFIO RELÂMPAGO</h2>
+        <p style="font-size:14px; color:#aaa;">Acerte o máximo de números possíveis em 60 segundos!</p>
+        <div style="font-size:28px; font-weight:bold; color:#ff0000; margin-bottom:10px;">⏳ <span id="relampago-tempo">60</span>s</div>
+        <div style="font-size:20px; font-weight:bold; color:#00ff00; margin-bottom:15px;">🎯 Acertos: <span id="relampago-pontos">0</span></div>
+        <h4 id="relampago-instrucao" style="color:var(--primary);">Adivinhe de 1 a 50</h4>
+        <input type="number" id="chute-relampago" onkeydown="if(event.key==='Enter') chutarRelampago()">
+        <button onclick="chutarRelampago()">CHUTAR</button>
+        <p id="msg-relampago" style="font-weight:bold; min-height:30px; margin-top:15px; font-size:18px;"></p>
+        <button style="margin-top:20px; background:transparent; border:1px solid #555; color:#888;" onclick="voltarMenu()">SAIR</button>
     </div>
 
-    <!-- TELA 2: SELEÇÃO DE FASES (MAPA) -->
-    <div class="main-container" id="tela-mapa" style="display: none;">
-        <div class="titulo-secao">SELEÇÃO DE FASES</div>
-        <div class="grid-fases" id="grid-levels"></div>
-        <button class="btn-acao btn-secundario" onclick="voltarMenu()">SAIR</button>
+    <!-- TELA RESULTADO -->
+    <div id="t-res" style="display:none">
+        <div class="card-resultado">
+            <h2 id="res-titulo" style="color:#00ff00; margin-top:0;">LEVEL CONCLUÍDO!</h2>
+            <div class="estrelas" id="res-estrelas">⭐⭐⭐</div>
+            <div class="info-res" id="res-patente">🏅 Patente: Bronze</div>
+            <div class="info-res" id="res-chutes">🎯 Chutes: 0</div>
+            <div class="info-res" id="res-tempo">⏱️ Tempo: 0s</div>
+            <button id="btn-proximo" style="margin-top: 15px;" onclick="irParaMapa()">VOLTAR AO MAPA</button>
+        </div>
     </div>
 
-    <!-- TELA 3: JOGO -->
-    <div class="main-container" id="tela-jogo" style="display: none;">
-        <div class="titulo-secao" id="lvl-titulo">LEVEL 1</div>
-        <p id="instrucao-jogo" style="color: #aaa; font-size: 14px;">Adivinhe o número</p>
-        <div id="vez-player" style="color: #ffcc00; font-size: 13px;"></div>
-
-        <input type="number" id="chute" placeholder="Seu palpite">
-        <button class="btn-acao" id="btn-chutar" onclick="chutar()">CHUTAR</button>
-
-        <p id="status-chances" style="color: #ffcc00; font-size: 13px;"></p>
-        <p id="msg-feedback" style="font-weight: bold; font-size: 15px; min-height: 20px;"></p>
-        <p id="info-dica" style="color: #00d8ff; font-size: 13px;"></p>
-
-        <button class="btn-acao btn-secundario" onclick="irParaMapa()">VOLTAR</button>
+    <!-- TELA DE CONQUISTAS -->
+    <div id="t-conquistas" style="display:none">
+        <div class="card-resultado" style="width:340px;">
+            <h2 style="color:var(--primary); margin-top:0;">🏆 CONQUISTAS</h2>
+            <ul id="lista-conquistas"></ul>
+            <button style="margin-top: 15px;" onclick="irParaMapa()">VOLTAR</button>
+        </div>
     </div>
+</div>
 
-    <!-- MODAL LOJA -->
-    <div id="modalLoja" class="modal-loja">
-        <div class="titulo-secao">LOJA DE DICAS</div>
-        <button class="btn-acao" onclick="buy(1)">Par ou Ímpar (30 $)</button>
-        <button class="btn-acao" onclick="buy(2)">Último Dígito (60 $)</button>
-        <button class="btn-acao" onclick="buy(4)">+2 Chances (80 $)</button>
-        <button class="btn-acao" style="border-color: #ff0055; color: #ff0055;" onclick="toggleLoja(false)">FECHAR</button>
+<div class="painel-chutes" id="painel-chutes">
+    <strong>📊 ESTATÍSTICAS</strong>
+    <div id="stats-box" style="font-size:11px; margin-bottom:15px; color:#aaa; line-height:1.6;">
+        Partidas: <span id="st-partidas" style="color:#fff">0</span> | Vitórias: <span id="st-vitorias" style="color:#00ff00">0</span><br>
+        Taxa de Vitória: <span id="st-taxa" style="color:#ffd700">0%</span>
     </div>
+    <strong>🎯 CHUTES DO LEVEL</strong>
+    <ul id="lista-chutes">
+        <li style="color:#555;text-align:center">Nenhum chute ainda</li>
+    </ul>
+</div>
 
-    <script>
-        const firebaseConfig = {
-          apiKey: "AIzaSyC6NesXVh5ZcwH2_ceLS65AKu5AbingFZs",
-          authDomain: "jogo-de-adivinhar-e8f79.firebaseapp.com",
-          databaseURL: "https://jogo-de-adivinhar-e8f79-default-rtdb.firebaseio.com/",
-          projectId: "jogo-de-adivinhar-e8f79",
-          storageBucket: "jogo-de-adivinhar-e8f79.firebasestorage.app",
-          messagingSenderId: "752330414069",
-          appId: "1:752330414069:web:eb8197e93146cc07c3b2bc"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+<!-- OS 3 RANKINGS NA TELA -->
+<div class="painel-ranks" id="painel-ranks">
+    <div class="rank-box">
+        <strong>🛡️ RANK: CAMPANHA (1P)</strong>
+        <ul id="lista-campanha" class="lista-rank"><li>Carregando...</li></ul>
+    </div>
+    <div class="rank-box">
+        <strong>⚔️ RANK: DUELO (2P)</strong>
+        <ul id="lista-duelo" class="lista-rank"><li>Carregando...</li></ul>
+    </div>
+    <div class="rank-box">
+        <strong>⚡ RANK: RELÂMPAGO</strong>
+        <ul id="lista-relampago" class="lista-rank"><li>Carregando...</li></ul>
+    </div>
+</div>
 
-        let modoAtual = 1, p1 = "", p2 = "", pVez = 1;
-        let lvl = 1, num = 0, ch = 0, maxNum = 15, moedas = 0;
-        let chutesNoLevel = 0, pontuacaoTotal = 0;
-        let progresso = { maxDesbloqueado: 1 };
+<div class="modal" id="modalLoja">
+    <div class="modal-conteudo">
+        <span class="fechar-modal" onclick="toggleLoja(false)">&times;</span>
+        <strong>🏪 LOJA DE DICAS</strong>
+        <button class="btn-loja" id="b1" onclick="buy(1)">💡 PAR OU ÍMPAR (30 Moedas)</button>
+        <button class="btn-loja" id="b2" onclick="buy(2)">🔍 ÚLTIMO DÍGITO (60 Moedas)</button>
+        <button class="btn-loja" id="b3" onclick="buy(3)">📐 FAIXA CURTA (40 Moedas)</button>
+        <button class="btn-loja" id="b5" onclick="buy(5)">🔢 MULTIPLICIDADE (50 Moedas)</button>
+        <button class="btn-loja" id="b4" onclick="buy(4)">❤️ CHANCE EXTRA +2 (80 Moedas)</button>
+        <div id="info-dica"></div>
+    </div>
+</div>
 
-        function $(id) { return document.getElementById(id); }
+<div class="modal" id="modalTemas">
+    <div class="modal-conteudo">
+        <span class="fechar-modal" onclick="toggleTemaModal(false)">&times;</span>
+        <strong>🎨 TEMAS VISUAIS</strong>
+        <button class="btn-loja" onclick="mudarTema('theme-neon')">🔷 NEON AZUL</button>
+        <button class="btn-loja" onclick="mudarTema('theme-cyberpunk')">💖 CYBERPUNK ROSA</button>
+        <button class="btn-loja" onclick="mudarTema('theme-matrix')">🟢 MATRIX VERDE</button>
+        <button class="btn-loja" onclick="mudarTema('theme-retro')">🟡 RETRO AMARELO</button>
+    </div>
+</div>
 
-        function carregarRankings() {
-            db.ref("ranking").orderByChild("score").limitToLast(3).on("value", (snapshot) => {
-                let el = $("lista-recordes");
-                if (!snapshot.exists()) {
-                    el.innerHTML = "Sem recordes";
-                    return;
-                }
-                let arr = [];
-                snapshot.forEach(c => arr.push(c.val()));
-                arr.sort((a,b) => b.score - a.score);
-                let html = "<ul style='padding:0;'>";
-                arr.forEach(p => {
-                    html += `<li><span>${p.nome}</span> <span>${p.score}pts</span></li>`;
-                });
-                html += "</ul>";
-                el.innerHTML = html;
-            });
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6NesXVh5ZcwH2_ceLS65AKu5AbingFZs",
+      authDomain: "jogo-de-adivinhar-e8f79.firebaseapp.com",
+      databaseURL: "https://jogo-de-adivinhar-e8f79-default-rtdb.firebaseio.com/",
+      projectId: "jogo-de-adivinhar-e8f79",
+      storageBucket: "jogo-de-adivinhar-e8f79.firebasestorage.app",
+      messagingSenderId: "752330414069",
+      appId: "1:752330414069:web:eb8197e93146cc07c3b2bc"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    let somAtivo = true;
+
+    function tocarSom(freq, tipo, duracao) {
+        if (!somAtivo) return;
+        try {
+            if (!audioCtx) audioCtx = new AudioContext();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = tipo || "sine";
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duracao);
+            osc.stop(audioCtx.currentTime + duracao);
+        } catch(e){}
+    }
+
+    function somClique() { tocarSom(400, "square", 0.05); }
+    function somAcerto() { tocarSom(600, "sine", 0.1); setTimeout(() => tocarSom(900, "sine", 0.2), 100); }
+    function somErro() { tocarSom(180, "sawtooth", 0.15); }
+    function somCompra() { tocarSom(800, "triangle", 0.1); setTimeout(() => tocarSom(1200, "triangle", 0.15), 80); }
+
+    function toggleSom() {
+        somAtivo = !somAtivo;
+        $("btn-som").textContent = somAtivo ? "🔊" : "🔇";
+    }
+
+    const patentes = [
+        { nome: "Sem Rank", icone: "❓", classe: "" },
+        { nome: "BRONZE I", icone: "🥉", classe: "patente-1" },
+        { nome: "BRONZE II", icone: "🥉", classe: "patente-1" },
+        { nome: "PRATA I", icone: "🥈", classe: "patente-2" },
+        { nome: "PRATA II", icone: "🥈", classe: "patente-2" },
+        { nome: "OURO I", icone: "🥇", classe: "patente-3" },
+        { nome: "OURO II", icone: "🥇", classe: "patente-3" },
+        { nome: "PLATINA", icone: "💎", classe: "patente-4" },
+        { nome: "DIAMANTE", icone: "🔷", classe: "patente-5" },
+        { nome: "ELITE", icone: "⭐", classe: "patente-5" },
+        { nome: "MESTRE SUPREMO", icone: "👑", classe: "patente-6" }
+    ];
+
+    const conquistasLista = [
+        { id: "sniper", nome: "🎯 Sniper", desc: "Acertou um número de primeira!" },
+        { id: "flash", nome: "⚡ Flash", desc: "Acertou em menos de 5 segundos!" },
+        { id: "consumista", nome: "🛒 Consumista", desc: "Comprou um item na loja!" },
+        { id: "mestre", nome: "👑 Lenda Suprema", desc: "Alcançou a patente Mestre (Level 10)!" }
+    ];
+
+    let conquistasDesbloqueadas = new Set();
+    let stats = { partidas: 0, vitorias: 0 };
+
+    const configuracaoNiveis = [
+        null,
+        { max: 15, chances: 8, tempoLimite: null },
+        { max: 25, chances: 8, tempoLimite: null },
+        { max: 40, chances: 7, tempoLimite: null },
+        { max: 55, chances: 7, tempoLimite: null },
+        { max: 70, chances: 6, tempoLimite: null },
+        { max: 85, chances: 6, tempoLimite: 30 },
+        { max: 100, chances: 6, tempoLimite: 25 },
+        { max: 115, chances: 5, tempoLimite: 20 },
+        { max: 130, chances: 5, tempoLimite: 15 },
+        { max: 150, chances: 5, tempoLimite: 12 }
+    ];
+
+    let lvl = 1, num = 0, ch = 0, maxNum = 10, moedas = 0, ativo = false;
+    let modoAtual = 1, p1 = "", p2 = "", pVez = 1;
+    let chutesNoLevel = 0, totalChutesGerais = 0;
+    let tempoInicio = 0, tempoGasto = 0, timerInterval = null, tempoRestanteLvl = 20;
+    let historicoChutes = [];
+
+    let relampagoPontos = 0;
+    let relampagoTempoRestante = 60;
+    let relampagoTimer = null;
+    let relampagoNumSecreto = 0;
+
+    let progresso = {
+        maxDesbloqueado: 1,
+        estrelas: { 1: "---", 2: "---", 3: "---", 4: "---", 5: "---", 6: "---", 7: "---", 8: "---", 9: "---", 10: "---" }
+    };
+
+    function $(id) { return document.getElementById(id); }
+
+    // CARREGAR OS 3 RANKINGS SEPARADOS DO FIREBASE
+    function carregarRankings() {
+        // 1. Campanha
+        db.ref("ranking").orderByChild("modo").equalTo("campanha").limitToLast(5).on("value", (snapshot) => {
+            preencherListaRank(snapshot, "lista-campanha", "pts");
+        });
+        // 2. Duelo
+        db.ref("ranking").orderByChild("modo").equalTo("duelo").limitToLast(5).on("value", (snapshot) => {
+            preencherListaRank(snapshot, "lista-duelo", "pts");
+        });
+        // 3. Relâmpago
+        db.ref("ranking").orderByChild("modo").equalTo("relampago").limitToLast(5).on("value", (snapshot) => {
+            preencherListaRank(snapshot, "lista-relampago", "pts");
+        });
+    }
+
+    function preencherListaRank(snapshot, elementId, unidade) {
+        let el = $(elementId);
+        if (!snapshot.exists()) {
+            el.innerHTML = '<li style="color:#555;text-align:center">Sem registros</li>';
+            return;
         }
-        carregarRankings();
+        let arrayValores = [];
+        snapshot.forEach((child) => { arrayValores.push(child.val()); });
+        arrayValores.sort((a, b) => b.score - a.score);
 
-        function selecionarModo(m) {
-            modoAtual = m;
-            $("tela-inicio").style.display = "none";
-            $("tela-login").style.display = "flex";
-            $("titulo-login").textContent = m === 2 ? "JOGADORES 1v1" : "SEU NOME";
-            $("nick2").style.display = m === 2 ? "block" : "none";
-        }
+        let html = "";
+        arrayValores.forEach((p, index) => {
+            html += `<li class="podio-${index < 3 ? index : 'x'}">
+                <span>#${index+1} ${p.nome}</span>
+                <span>${p.score} ${unidade}</span>
+            </li>`;
+        });
+        el.innerHTML = html;
+    }
 
-        function iniciarJogo() {
-            p1 = $("nick1").value.trim();
-            p2 = $("nick2").value.trim();
-            if (!p1 || (modoAtual === 2 && !p2)) return;
+    carregarRankings();
 
-            $("tela-login").style.display = "none";
-            $("hud-topo").style.display = "flex";
-            irParaMapa();
-        }
+    function selecionarModo(m) {
+        somClique();
+        modoAtual = m;
+        $("t0").style.display = 'none';
+        $("t1").style.display = 'flex';
+        $("titulo-login").textContent = m === 2 ? "NOME DOS JOGADORES" : "SEU NOME";
+        $("nick2").style.display = m === 2 ? "block" : "none";
+        $("nick1").focus();
+    }
 
-        function irParaMapa() {
-            $("tela-jogo").style.display = "none";
-            $("tela-mapa").style.display = "flex";
-            renderizarMapa();
-        }
+    function logar() {
+        somClique();
+        p1 = $("nick1").value.trim();
+        p2 = $("nick2").value.trim();
+        if (!p1 || (modoAtual === 2 && !p2)) return;
 
-        function renderizarMapa() {
-            let grid = $("grid-levels");
-            grid.innerHTML = "";
-            for (let i = 1; i <= 6; i++) {
-                let desbloqueado = i <= progresso.maxDesbloqueado;
-                let card = document.createElement("div");
-                card.className = `card-fase ${desbloqueado ? 'ativa' : ''}`;
-                
-                if (desbloqueado) {
-                    card.innerHTML = `<div class="num-fase">${i}</div><div class="sub-fase">---</div>`;
-                    card.onclick = () => iniciarNivel(i);
-                } else {
-                    card.innerHTML = `<div class="icone-fase">🔒</div><div class="sub-fase">---</div>`;
-                }
-                grid.appendChild(card);
+        moedas = 0; totalChutesGerais = 0; ativo = true; pVez = 1;
+        $("t1").style.display = "none";
+        $("hud-topo").style.display = "flex";
+        irParaMapa();
+    }
+
+    function iniciarModoRelampago() {
+        somClique();
+        let nomeJogador = prompt("Digite seu nome para o Desafio Relâmpago:", "Visitante");
+        if (!nomeJogador || nomeJogador.trim() === "") nomeJogador = "Visitante";
+        p1 = nomeJogador.trim();
+
+        $("t0").style.display = "none";
+        $("t-relampago").style.display = "flex";
+        $("hud-topo").style.display = "none";
+
+        relampagoPontos = 0;
+        relampagoTempoRestante = 60;
+        $("relampago-pontos").textContent = relampagoPontos;
+        $("relampago-tempo").textContent = relampagoTempoRestante;
+        
+        proximaRodadaRelampago();
+
+        clearInterval(relampagoTimer);
+        relampagoTimer = setInterval(() => {
+            relampagoTempoRestante--;
+            $("relampago-tempo").textContent = relampagoTempoRestante;
+            if (relampagoTempoRestante <= 0) {
+                clearInterval(relampagoTimer);
+                fimModoRelampago();
             }
+        }, 1000);
+    }
+
+    function proximaRodadaRelampago() {
+        relampagoNumSecreto = Math.floor(Math.random() * 50) + 1;
+        $("msg-relampago").textContent = "";
+        $("chute-relampago").value = "";
+        $("chute-relampago").focus();
+    }
+
+    function chutarRelampago() {
+        let chute = Number($("chute-relampago").value);
+        let msg = $("msg-relampago");
+        if (!chute) return;
+
+        if (chute === relampagoNumSecreto) {
+            somAcerto();
+            relampagoPontos++;
+            $("relampago-pontos").textContent = relampagoPontos;
+            msg.style.color = "#00ff00";
+            msg.textContent = "CORRETO! Próximo número...";
+            confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
+            setTimeout(proximaRodadaRelampago, 800);
+        } else {
+            somErro();
+            msg.style.color = "#ff0055";
+            msg.textContent = chute < relampagoNumSecreto ? "MAIOR ↑" : "MENOR ↓";
+            $("chute-relampago").value = "";
+            $("chute-relampago").focus();
         }
+    }
 
-        function iniciarNivel(n) {
-            lvl = n;
-            maxNum = 10 + (n * 5);
-            ch = 8 - Math.floor(n / 2);
-            num = Math.floor(Math.random() * maxNum) + 1;
-            chutesNoLevel = 0;
+    function fimModoRelampago() {
+        somAcerto();
+        alert(`Tempo esgotado! Você fez ${relampagoPontos} pontos no Desafio Relâmpago!`);
+        db.ref("ranking").push({
+            nome: p1,
+            score: relampagoPontos,
+            modo: "relampago",
+            data: Date.now()
+        });
+        voltarMenu();
+    }
 
-            $("tela-mapa").style.display = "none";
-            $("tela-jogo").style.display = "flex";
-            $("lvl-titulo").textContent = `LEVEL ${lvl}`;
-            $("instrucao-jogo").textContent = `Adivinhe de 1 a ${maxNum}`;
-            $("status-chances").textContent = `Chances: ${ch}`;
-            $("vez-player").textContent = modoAtual === 2 ? `TURNO DE: ${pVez === 1 ? p1 : p2}` : "";
-            $("msg-feedback").textContent = "";
-            $("info-dica").textContent = "";
-            $("chute").value = "";
-            $("btn-chutar").disabled = false;
-        }
+    function irParaMapa() {
+        $("t2").style.display = "none";
+        $("t-res").style.display = "none";
+        $("t-conquistas").style.display = "none";
+        $("t-relampago").style.display = "none";
+        $("painel-chutes").style.display = "none";
+        $("t-map").style.display = "flex";
+        renderizarMapa();
+    }
 
-        function chutar() {
-            let p = Number($("chute").value);
-            if (!p) return;
+    function renderizarMapa() {
+        let grid = $("grid-levels");
+        grid.innerHTML = "";
+        for (let i = 1; i <= 10; i++) {
+            let desbloqueado = i <= progresso.maxDesbloqueado;
+            let card = document.createElement("div");
+            card.className = `card-level ${desbloqueado ? '' : 'bloqueado'} ${i === 10 ? 'lvl-10' : ''}`;
+            let pat = patentes[i];
 
-            ch--;
-            chutesNoLevel++;
-            $("status-chances").textContent = `Chances: ${ch}`;
-
-            if (p === num) {
-                moedas += 10 + (lvl * 5);
-                $("saldo-moedas").textContent = moedas;
-                $("msg-feedback").style.color = "#00d8ff";
-                $("msg-feedback").textContent = "CORRETO!";
-                $("btn-chutar").disabled = true;
-
-                pontuacaoTotal += Math.max(10, 100 - (chutesNoLevel * 10));
-
-                if (lvl === progresso.maxDesbloqueado && progresso.maxDesbloqueado < 6) {
-                    progresso.maxDesbloqueado++;
-                }
-
-                // Salva no banco APENAS no ZERAR (Level 6)
-                if (lvl === 6) {
-                    let nomeFinal = modoAtual === 2 ? (pVez === 1 ? p1 : p2) : p1;
-                    db.ref("ranking").push({
-                        nome: nomeFinal,
-                        score: pontuacaoTotal,
-                        data: Date.now()
-                    });
-                }
-
-                setTimeout(irParaMapa, 1500);
+            if (desbloqueado) {
+                card.innerHTML = `
+                    <div class="num-lvl">${i}</div>
+                    <div class="stars-lvl">${progresso.estrelas[i]}</div>
+                    <div class="tag-patente ${pat.classe}">${pat.icone} ${pat.nome}</div>
+                `;
+                card.onclick = () => { somClique(); iniciarNivel(i); };
             } else {
-                $("msg-feedback").style.color = "#ff0055";
-                $("msg-feedback").textContent = p < num ? "MAIOR ↑" : "MENOR ↓";
-
-                if (modoAtual === 2) {
-                    pVez = pVez === 1 ? 2 : 1;
-                    $("vez-player").textContent = `TURNO DE: ${pVez === 1 ? p1 : p2}`;
-                }
-
-                if (ch <= 0) {
-                    $("msg-feedback").textContent = `GAMEOVER! Era ${num}`;
-                    $("btn-chutar").disabled = true;
-                    setTimeout(irParaMapa, 2000);
-                }
+                card.innerHTML = `<div class="cadeado-icon">🔒</div><div class="stars-lvl">---</div><div class="tag-patente" style="color:#555">${pat.nome}</div>`;
             }
-            $("chute").value = "";
+            grid.appendChild(card);
+        }
+    }
+
+    function iniciarNivel(nivelSelecionado) {
+        lvl = nivelSelecionado;
+        $("t-map").style.display = "none";
+        $("t2").style.display = "flex";
+        $("painel-chutes").style.display = "block";
+        fase();
+    }
+
+    function fase() {
+        const config = configuracaoNiveis[lvl];
+        maxNum = config.max; ch = config.chances;
+        num = Math.floor(Math.random() * maxNum) + 1;
+        chutesNoLevel = 0; historicoChutes = [];
+        atualizarPainelChutes();
+        tempoInicio = Date.now();
+        clearInterval(timerInterval);
+
+        if (config.tempoLimite) {
+            $("timer-display").style.display = "block";
+            tempoRestanteLvl = config.tempoLimite;
+            $("tempo-restante").textContent = tempoRestanteLvl;
+            timerInterval = setInterval(() => {
+                tempoRestanteLvl--;
+                $("tempo-restante").textContent = tempoRestanteLvl;
+                if (tempoRestanteLvl <= 0) { clearInterval(timerInterval); gameOverTempo(); }
+            }, 1000);
+        } else {
+            $("timer-display").style.display = "none";
         }
 
-        function toggleLoja(abrir) {
-            $("modalLoja").style.display = abrir ? "flex" : "none";
+        $("btn-chutar").disabled = false;
+        $("info-dica").textContent = "";
+        ui();
+    }
+
+    function toggleLoja(abrir) { somClique(); $("modalLoja").style.display = abrir ? "flex" : "none"; }
+    function toggleTemaModal(abrir) { somClique(); $("modalTemas").style.display = abrir ? "flex" : "none"; }
+    
+    function mudarTema(nomeTema) {
+        somClique();
+        document.body.className = nomeTema;
+        toggleTemaModal(false);
+    }
+
+    function ui() {
+        $("lvl").textContent = `LEVEL ${lvl}/10`;
+        $("instrucao").textContent = `Adivinhe de 1 a ${maxNum}`;
+        let patInfo = patentes[lvl];
+        $("patente-player").innerHTML = `Patente em jogo: <span class="${patInfo.classe}">${patInfo.icone} ${patInfo.nome}</span>`;
+        $("vez-player").style.display = modoAtual === 2 ? "block" : "none";
+        if (modoAtual === 2) $("vez-player").textContent = `TURNO DE: ${pVez === 1 ? p1 : p2}`;
+        upLoja();
+        $("status").textContent = `Chances Restantes: ${ch}`;
+        $("msg").textContent = $("chute").value = "";
+        $("chute").focus();
+    }
+
+    function upLoja() {
+        $("saldo-moedas").textContent = moedas;
+        $("b1").disabled = !ativo || moedas < 30;
+        $("b2").disabled = !ativo || moedas < 60;
+        $("b3").disabled = !ativo || moedas < 40;
+        $("b5").disabled = !ativo || moedas < 50;
+        $("b4").disabled = !ativo || moedas < 80;
+    }
+
+    function buy(tipo) {
+        let txt = $("info-dica");
+        desbloquearConquista("consumista");
+        somCompra();
+        if (tipo === 1 && moedas >= 30) { moedas -= 30; txt.textContent = `💡 O número é ${(num % 2 === 0) ? "PAR" : "ÍMPAR"}`; } 
+        if (tipo === 2 && moedas >= 60) { moedas -= 60; txt.textContent = `🔍 O último dígito é ${num % 10}`; }
+        if (tipo === 3 && moedas >= 40) { 
+            moedas -= 40; 
+            let minF = Math.max(1, num - Math.floor(Math.random()*4 + 2));
+            let maxF = Math.min(maxNum, num + Math.floor(Math.random()*4 + 2));
+            txt.textContent = `📐 O número está entre ${minF} e ${maxF}`; 
+        }
+        if (tipo === 5 && moedas >= 50) { 
+            moedas -= 50; 
+            let mult = (num % 3 === 0) ? "3" : ((num % 5 === 0) ? "5" : "NENHUM");
+            txt.textContent = `🔢 Múltiplo de: ${mult}`; 
+        }
+        if (tipo === 4 && moedas >= 80) { moedas -= 80; ch += 2; txt.textContent = `❤️ +2 CHANCES!`; $("status").textContent = `Chances: ${ch}`; }
+        upLoja();
+    }
+
+    function chutar() {
+        if ($("btn-chutar").disabled) return;
+        let p = Number($("chute").value), m = $("msg");
+        if (!p || p < 1 || p > maxNum) return m.textContent = `De 1 a ${maxNum}!`;
+        
+        if (historicoChutes.some(item => item.numero === p)) {
+            somErro();
+            m.style.color = "#ffcc00"; m.textContent = "⚠️ NÚMERO JÁ CHUTADO!";
+            $("chute").value = ""; $("chute").focus();
+            return;
         }
 
-        function buy(tipo) {
-            if (tipo === 1 && moedas >= 30) {
-                moedas -= 30;
-                $("info-dica").textContent = `💡 O número é ${(num % 2 === 0) ? "PAR" : "ÍMPAR"}`;
-            } else if (tipo === 2 && moedas >= 60) {
-                moedas -= 60;
-                $("info-dica").textContent = `🔍 Termina em ${num % 10}`;
-            } else if (tipo === 4 && moedas >= 80) {
-                moedas -= 80;
-                ch += 2;
-                $("status-chances").textContent = `Chances: ${ch}`;
+        ch--; chutesNoLevel++; totalChutesGerais++;
+        let jogadorAtual = modoAtual === 2 ? (pVez === 1 ? p1 : p2) : p1;
+
+        if (p === num) {
+            clearInterval(timerInterval);
+            $("btn-chutar").disabled = true;
+            tempoGasto = Math.round((Date.now() - tempoInicio) / 1000);
+            moedas += 15 + (lvl * 5);
+            stats.partidas++; stats.vitorias++; atualizarStats();
+            upLoja();
+            somAcerto();
+            
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+
+            if (chutesNoLevel === 1) desbloquearConquista("sniper");
+            if (tempoGasto < 5) desbloquearConquista("flash");
+            if (lvl === 10) desbloquearConquista("mestre");
+
+            // Salvar no Ranking do Firebase de acordo com o modo
+            let modoStr = modoAtual === 1 ? "campanha" : "duelo";
+            let pontuacaoFinal = Math.max(10, 100 - (chutesNoLevel * 5) - (tempoGasto));
+            db.ref("ranking").push({
+                nome: jogadorAtual,
+                score: pontuacaoFinal,
+                modo: modoStr,
+                data: Date.now()
+            });
+
+            historicoChutes.unshift({ numero: p, dica: "ACERTOU!" });
+            atualizarPainelChutes();
+            exibirResultadoLevel();
+        } else {
+            somErro();
+            let dicaTexto = p < num ? "MAIOR ↑" : "MENOR ↓";
+            historicoChutes.unshift({ numero: p, dica: dicaTexto });
+            atualizarPainelChutes();
+
+            if (ch === 0) {
+                clearInterval(timerInterval);
+                $("btn-chutar").disabled = true;
+                stats.partidas++; atualizarStats();
+                m.style.color = "#ff0000"; 
+                m.textContent = `GAME OVER! ${jogadorAtual} errou. Era ${num}.`;
+                setTimeout(irParaMapa, 2500);
+            } else {
+                m.style.color = "#00ffff"; m.textContent = dicaTexto;
+                if (modoAtual === 2) pVez = pVez === 1 ? 2 : 1;
+                ui();
             }
-            $("saldo-moedas").textContent = moedas;
-            toggleLoja(false);
         }
+    }
 
-        function iniciarRelampago() {
-            let nome = prompt("Seu nome para o Relâmpago:", "Visitante") || "Visitante";
-            p1 = nome;
-            modoAtual = 1;
-            iniciarNivel(1);
+    function atualizarPainelChutes() {
+        let lista = $("lista-chutes");
+        if (historicoChutes.length === 0) {
+            lista.innerHTML = '<li style="color:#555;text-align:center">Nenhum chute ainda</li>';
+            return;
         }
+        let html = "";
+        historicoChutes.forEach(item => {
+            let classeDica = item.dica.includes("MAIOR") ? "dica-maior" : (item.dica.includes("MENOR") ? "dica-menor" : "derrota-tag");
+            html += `<li><span>Nº <strong>${item.numero}</strong></span><span class="${classeDica}">${item.dica}</span></li>`;
+        });
+        lista.innerHTML = html;
+    }
 
-        function voltarMenu() {
-            $("tela-mapa").style.display = "none";
-            $("tela-login").style.display = "none";
-            $("tela-jogo").style.display = "none";
-            $("hud-topo").style.display = "none";
-            $("tela-inicio").style.display = "flex";
-        }
-    </script>
+    function atualizarStats() {
+        $("st-partidas").textContent = stats.partidas;
+        $("st-vitorias").textContent = stats.vitorias;
+        let tx = stats.partidas > 0 ? Math.round((stats.vitorias / stats.partidas) * 100) : 0;
+        $("st-taxa").textContent = `${tx}%`;
+    }
+
+    function gameOverTempo() {
+        $("btn-chutar").disabled = true;
+        somErro();
+        stats.partidas++; atualizarStats();
+        $("msg").style.color = "#ff0000"; $("msg").textContent = `⏱️ TEMPO ACABOU! Era ${num}.`;
+        setTimeout(irParaMapa, 2500);
+    }
+
+    function exibirResultadoLevel() {
+        $("t2").style.display = "none";
+        $("painel-chutes").style.display = "none";
+        $("t-res").style.display = "flex";
+
+        const config = configuracaoNiveis[lvl];
+        let estrelas = "⭐";
+        if (ch >= Math.floor(config.chances * 0.6)) estrelas = "⭐⭐⭐";
+        else if (ch >= Math.floor(config.chances * 0.3)) estrelas = "⭐⭐";
+
+        progresso.estrelas[lvl] = estrelas;
+        if (lvl < 10 && progresso.maxDesbloqueado < lvl + 1) progresso.maxDesbloqueado = lvl + 1;
+
+        let patInfo = patentes[lvl];
+        
+        $("res-titulo").textContent = `LEVEL ${lvl} CONCLUÍDO!`;
+        $("res-estrelas").textContent = estrelas;
+        $("res-patente").innerHTML = `🏅 Patente: <span class="${patInfo.classe}">${patInfo.icone} ${patInfo.nome}</span>`;
+        $("res-chutes").textContent = `🎯 Chutes Usados: ${chutesNoLevel}`;
+        $("res-tempo").textContent = `⏱️ Tempo: ${tempoGasto}s`;
+    }
+
+    function desbloquearConquista(id) {
+        if (!conquistasDesbloqueadas.has(id)) conquistasDesbloqueadas.add(id);
+    }
+
+    function abrirConquistas() {
+        somClique();
+        $("t-map").style.display = "none";
+        $("t-conquistas").style.display = "flex";
+        let ul = $("lista-conquistas");
+        ul.innerHTML = "";
+        conquistasLista.forEach(c => {
+            let ok = conquistasDesbloqueadas.has(c.id);
+            ul.innerHTML += `
+                <li style="opacity: ${ok ? '1' : '0.4'}; background:#151515;">
+                    <div style="text-align:left;">
+                        <strong style="margin:0; text-align:left; color:${ok ? 'var(--primary)' : '#888'}">${c.nome}</strong>
+                        <div style="font-size:10px; color:#aaa;">${c.desc}</div>
+                    </div>
+                    <span>${ok ? '✅' : '🔒'}</span>
+                </li>`;
+        });
+    }
+
+    function voltarMenu() {
+        somClique();
+        clearInterval(timerInterval);
+        clearInterval(relampagoTimer);
+        ativo = false;
+        toggleLoja(false);
+        $("hud-topo").style.display = "none";
+        $("t2").style.display = "none";
+        $("t-res").style.display = "none";
+        $("t-conquistas").style.display = "none";
+        $("t-relampago").style.display = "none";
+        $("painel-chutes").style.display = "none";
+        $("t-map").style.display = "none";
+        $("t0").style.display = "flex";
+        $("nick1").value = ""; $("nick2").value = "";
+        progresso.maxDesbloqueado = 1;
+        progresso.estrelas = { 1: "---", 2: "---", 3: "---", 4: "---", 5: "---", 6: "---", 7: "---", 8: "---", 9: "---", 10: "---" };
+    }
+</script>
 </body>
 </html>
