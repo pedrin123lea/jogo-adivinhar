@@ -4,457 +4,284 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo de Adivinhar</title>
-    <!-- Firebase App and Database SDKs -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 
     <style>
-        :root {
-            --bg-color: #0f0c20;
-            --card-bg: #1a1636;
-            --accent-color: #00f0ff;
-            --text-color: #ffffff;
-            --border-color: #2a2456;
-        }
-
-        body.tema-cyberpunk {
-            --bg-color: #0d0221;
-            --card-bg: #261447;
-            --accent-color: #ff007f;
-            --text-color: #ffffff;
-            --border-color: #ff007f;
-        }
-
-        body.tema-neon {
-            --bg-color: #000000;
-            --card-bg: #0a0a0a;
-            --accent-color: #39ff14;
-            --text-color: #39ff14;
-            --border-color: #39ff14;
-        }
-
-        body.tema-retro {
-            --bg-color: #2b1d0c;
-            --card-bg: #422a0f;
-            --accent-color: #ffb703;
-            --text-color: #f1faee;
-            --border-color: #ffb703;
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Courier New', Courier, monospace, sans-serif;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: #080808;
+            background-image: repeating-linear-gradient(0deg, #000 0px, #000 1px, transparent 1px, transparent 2px);
+            background-size: 100% 3px;
+            color: #ffffff;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            padding: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 480px;
-            background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 16px;
             padding: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
             position: relative;
         }
 
-        h1, h2, h3 {
+        /* TOPO: Carrinho e Moedas */
+        .topo-esquerda {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-carrinho {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid #00d8ff;
+            background: #000;
+            color: #00d8ff;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(0, 216, 255, 0.3);
+        }
+
+        .hud-moedas {
+            border: 2px solid #ffcc00;
+            border-radius: 20px;
+            padding: 5px 15px;
+            background: #000;
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
+        }
+
+        /* TOPO DIR: Top Recordes */
+        .topo-direita {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            width: 220px;
+        }
+
+        .box-recordes {
+            border: 2px solid #00d8ff;
+            border-radius: 10px;
+            padding: 10px;
+            background: #000;
+            box-shadow: 0 0 10px rgba(0, 216, 255, 0.2);
+        }
+
+        .titulo-recordes {
+            color: #ffcc00;
+            font-size: 13px;
+            font-weight: bold;
             text-align: center;
-            color: var(--accent-color);
-            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             letter-spacing: 1px;
         }
 
-        /* HUD Topo */
-        .hud-topo {
+        .content-recordes {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 5px;
+            padding: 8px;
+            min-height: 45px;
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+        }
+
+        .content-recordes li {
+            list-style: none;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 15px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 10px;
-            width: 100%;
-            max-width: 480px;
+            color: #aaa;
+            margin-bottom: 3px;
         }
 
-        .hud-item {
+        /* CONTAINER CENTRAL */
+        .main-container {
+            width: 100%;
+            max-width: 500px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 5px;
-            font-weight: bold;
-            font-size: 14px;
+            gap: 25px;
         }
 
-        .btn-icon {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-color);
-        }
-
-        /* Botões */
-        .btn {
-            background: var(--accent-color);
-            color: #000;
-            border: none;
-            padding: 12px 20px;
+        .titulo-secao {
+            color: #00d8ff;
+            font-size: 18px;
+            letter-spacing: 2px;
             font-weight: bold;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
             text-transform: uppercase;
+        }
+
+        /* GRID DE FASES (3 COLUNAS) */
+        .grid-fases {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
             width: 100%;
+            max-width: 360px;
         }
 
-        .btn:hover {
-            opacity: 0.9;
+        .card-fase {
+            aspect-ratio: 1;
+            background: #080808;
+            border: 2px solid #222;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            gap: 4px;
+            transition: all 0.2s;
         }
 
-        .btn:active {
-            transform: scale(0.98);
+        .card-fase.ativa {
+            border-color: #00d8ff;
+            box-shadow: 0 0 12px rgba(0, 216, 255, 0.4);
         }
 
-        .btn:disabled {
-            background: #555;
-            color: #888;
-            cursor: not-allowed;
+        .card-fase.derrota {
+            border-color: #501015;
         }
 
-        .btn-secundario {
-            background: transparent;
-            border: 2px solid var(--border-color);
-            color: var(--text-color);
+        .num-fase {
+            font-size: 26px;
+            font-weight: bold;
+            color: #00d8ff;
         }
 
-        /* Inputs */
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-color);
+        .icone-fase {
+            font-size: 22px;
+            color: #ffcc00;
+        }
+
+        .sub-fase {
+            color: #ffcc00;
+            font-size: 12px;
+        }
+
+        /* BOTÃO SAIR / AÇÕES */
+        .btn-acao {
+            background: #080808;
+            border: 2px solid #333;
+            color: #aaa;
+            padding: 10px 30px;
             border-radius: 8px;
-            color: var(--text-color);
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: 0.2s;
+        }
+
+        .btn-acao:hover {
+            border-color: #00d8ff;
+            color: #fff;
+        }
+
+        /* TELAS SECUNDÁRIAS / INPUTS */
+        input[type="text"], input[type="number"] {
+            background: #000;
+            border: 2px solid #00d8ff;
+            border-radius: 8px;
+            color: #fff;
+            padding: 12px;
             font-size: 16px;
             text-align: center;
             outline: none;
-        }
-
-        input[type="text"]:focus, input[type="number"]:focus {
-            border-color: var(--accent-color);
-        }
-
-        /* Rankings / Listas */
-        .ranking-container {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 10px;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .ranking-lista {
-            list-style: none;
-        }
-
-        .ranking-lista li {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 13px;
-        }
-
-        .podio-0 { color: #ffd700; font-weight: bold; }
-        .podio-1 { color: #c0c0c0; font-weight: bold; }
-        .podio-2 { color: #cd7f32; font-weight: bold; }
-
-        /* Mapa de Fases */
-        .grid-levels {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            max-height: 320px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        .card-level {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .card-level.bloqueado {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .card-level .num-lvl {
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        .card-level .stars-lvl {
-            color: #ffd700;
-            font-size: 12px;
-        }
-
-        .tag-patente {
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(0,0,0,0.4);
-            margin-top: 4px;
-        }
-
-        /* Patentes Cores */
-        .patente-1 { color: #cd7f32; }
-        .patente-2 { color: #c0c0c0; }
-        .patente-3 { color: #ffd700; }
-        .patente-4 { color: #e5e4e2; }
-        .patente-5 { color: #00ffff; }
-        .patente-6 { color: #ff00ff; }
-
-        /* Histórico de Chutes */
-        .painel-chutes {
             width: 100%;
-            max-width: 480px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 10px;
+            max-width: 300px;
         }
 
-        .lista-chutes {
-            list-style: none;
-            max-height: 100px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .lista-chutes li {
-            font-size: 12px;
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 8px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 4px;
-        }
-
-        .dica-maior { color: #00ffaa; }
-        .dica-menor { color: #ff9900; }
-
-        /* Modal Generico */
-        .modal {
+        .modal-loja {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             display: none;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 15px;
             z-index: 100;
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            width: 90%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        /* Timer Display */
-        .timer-display {
-            font-size: 18px;
-            font-weight: bold;
-            color: #ff0055;
-            text-align: center;
         }
     </style>
 </head>
-<body class="tema-padrao">
+<body>
 
     <!-- HUD TOPO -->
-    <div id="hud-topo" class="hud-topo" style="display: none;">
-        <div class="hud-item">
-            <span>🪙</span> <span id="saldo-moedas">0</span>
-        </div>
-        <div class="hud-item">
-            <button class="btn-icon" onclick="toggleTemaModal(true)">🎨</button>
-            <button class="btn-icon" onclick="toggleLoja(true)">🛒</button>
-            <button id="btn-som" class="btn-icon" onclick="toggleSom()">🔊</button>
-            <button class="btn-icon" onclick="voltarMenu()">🚪</button>
+    <div class="topo-esquerda">
+        <button class="btn-carrinho" onclick="toggleLoja(true)">🛒</button>
+        <div class="hud-moedas">
+            <span style="background: #ffcc00; color: #000; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">$</span>
+            <span id="saldo-moedas">0</span>
         </div>
     </div>
 
-    <!-- TELA 0: MENU PRINCIPAL -->
-    <div id="t0" class="container">
-        <h1>ADIVINHE O NÚMERO</h1>
+    <div class="topo-direita">
+        <div class="box-recordes">
+            <div class="titulo-recordes">🏆 TOP RECORDES</div>
+            <div class="content-recordes" id="lista-recordes">
+                Sem recordes
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container" id="tela-mapa">
+        <div class="titulo-secao">SELEÇÃO DE FASES</div>
+
+        <div class="grid-fases" id="grid-levels"></div>
+
+        <button class="btn-acao" onclick="voltarMenu()">SAIR</button>
+    </div>
+
+    <!-- TELA DE JOGO -->
+    <div class="main-container" id="tela-jogo" style="display: none;">
+        <div class="titulo-secao" id="lvl-titulo">LEVEL 1</div>
+        <p id="instrucao-jogo" style="color: #aaa; font-size: 14px;">Adivinhe o número</p>
         
-        <button class="btn" onclick="selecionarModo(1)">Modo Campanha</button>
-        <button class="btn" onclick="selecionarModo(2)">Modo Duelo 1v1</button>
-        <button class="btn" onclick="iniciarModoRelampago()">Modo Relâmpago ⚡</button>
+        <input type="number" id="chute" placeholder="Seu palpite">
+        <button class="btn-acao" style="border-color: #00d8ff; color: #00d8ff;" id="btn-chutar" onclick="chutar()">CHUTAR</button>
 
-        <div style="margin-top: 10px;">
-            <h3>Rankings Gerais</h3>
-            <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                <button class="btn btn-secundario" style="font-size: 10px; padding: 4px;" onclick="$('rank-c').style.display='block';$('rank-d').style.display='none';$('rank-r').style.display='none';">Campanha</button>
-                <button class="btn btn-secundario" style="font-size: 10px; padding: 4px;" onclick="$('rank-c').style.display='none';$('rank-d').style.display='block';$('rank-r').style.display='none';">Duelo</button>
-                <button class="btn btn-secundario" style="font-size: 10px; padding: 4px;" onclick="$('rank-c').style.display='none';$('rank-d').style.display='none';$('rank-r').style.display='block';">Relâmpago</button>
-            </div>
+        <p id="status-chances" style="color: #ffcc00; font-size: 13px;"></p>
+        <p id="msg-feedback" style="font-weight: bold; font-size: 15px; min-height: 20px;"></p>
+        <p id="info-dica" style="color: #00d8ff; font-size: 13px;"></p>
 
-            <div id="rank-c" class="ranking-container">
-                <ul id="lista-campanha" class="ranking-lista"></ul>
-            </div>
-            <div id="rank-d" class="ranking-container" style="display: none;">
-                <ul id="lista-duelo" class="ranking-lista"></ul>
-            </div>
-            <div id="rank-r" class="ranking-container" style="display: none;">
-                <ul id="lista-relampago" class="ranking-lista"></ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- TELA 1: LOGIN / NICKNAME -->
-    <div id="t1" class="container" style="display: none;">
-        <h2 id="titulo-login">SEU NOME</h2>
-        <input type="text" id="nick1" placeholder="Nome Jogador 1" maxlength="12">
-        <input type="text" id="nick2" placeholder="Nome Jogador 2" maxlength="12" style="display: none;">
-        <button class="btn" onclick="logar()">CONTINUAR</button>
-        <button class="btn btn-secundario" onclick="voltarMenu()">VOLTAR</button>
-    </div>
-
-    <!-- TELA DE SELEÇÃO DE FASES (MAPA) -->
-    <div id="t-map" class="container" style="display: none;">
-        <h2>MAPA DE FASES</h2>
-        <div class="grid-levels" id="grid-levels"></div>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="btn btn-secundario" onclick="abrirConquistas()">🏆 Conquistas</button>
-            <button class="btn btn-secundario" onclick="voltarMenu()">Menu</button>
-        </div>
-    </div>
-
-    <!-- TELA 2: TELA DE JOGO -->
-    <div id="t2" class="container" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="lvl">LEVEL 1</h3>
-            <div id="timer-display" class="timer-display" style="display: none;">⏱️ <span id="tempo-restante">20</span>s</div>
-        </div>
-
-        <p id="instrucao" style="text-align: center; font-size: 14px; opacity: 0.8;">Adivinhe o número</p>
-        <div id="patente-player" style="text-align: center; font-size: 12px;"></div>
-        <div id="vez-player" style="text-align: center; font-weight: bold; color: var(--accent-color); display: none;"></div>
-
-        <input type="number" id="chute" placeholder="Digite seu palpite">
-        <button id="btn-chutar" class="btn" onclick="chutar()">CHUTAR</button>
-
-        <p id="status" style="text-align: center; font-weight: bold;"></p>
-        <p id="msg" style="text-align: center; font-weight: bold; min-height: 20px;"></p>
-        <p id="info-dica" style="text-align: center; color: var(--accent-color); font-size: 12px;"></p>
-
-        <button class="btn btn-secundario" onclick="irParaMapa()">DESISTIR / MAPA</button>
-    </div>
-
-    <!-- HISTÓRICO DE CHUTES (EXIBIDO DURANTE A PARTIDA) -->
-    <div id="painel-chutes" class="painel-chutes" style="display: none;">
-        <h4 style="text-align: center; font-size: 12px; margin-bottom: 5px;">HISTÓRICO DE CHUTES</h4>
-        <ul id="lista-chutes" class="lista-chutes"></ul>
-    </div>
-
-    <!-- TELA MODO RELÂMPAGO -->
-    <div id="t-relampago" class="container" style="display: none;">
-        <h2>MODO RELÂMPAGO ⚡</h2>
-        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-            <div>Pontos: <strong id="relampago-pontos" style="color: var(--accent-color);">0</strong></div>
-            <div class="timer-display">⏱️ <span id="relampago-tempo">60</span>s</div>
-        </div>
-
-        <p style="text-align: center; font-size: 14px;">Adivinhe números de 1 a 50 sem parar!</p>
-        <input type="number" id="chute-relampago" placeholder="Palpite rápido!">
-        <button class="btn" onclick="chutarRelampago()">CHUTAR</button>
-        <p id="msg-relampago" style="text-align: center; font-weight: bold; min-height: 20px;"></p>
-    </div>
-
-    <!-- TELA RESULTADO FASE -->
-    <div id="t-res" class="container" style="display: none; text-align: center;">
-        <h2 id="res-titulo">LEVEL CONCLUÍDO!</h2>
-        <div id="res-estrelas" style="font-size: 30px; margin: 10px 0;">⭐⭐⭐</div>
-        <p id="res-patente"></p>
-        <p id="res-chutes"></p>
-        <p id="res-tempo"></p>
-        
-        <button class="btn" onclick="irParaMapa()" style="margin-top: 15px;">CONTINUAR</button>
-    </div>
-
-    <!-- TELA CONQUISTAS -->
-    <div id="t-conquistas" class="container" style="display: none;">
-        <h2>CONQUISTAS 🏆</h2>
-        <ul id="lista-conquistas" style="list-style: none; display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;"></ul>
-        <button class="btn btn-secundario" onclick="irParaMapa()" style="margin-top: 10px;">VOLTAR</button>
+        <button class="btn-acao" onclick="irParaMapa()">VOLTAR</button>
     </div>
 
     <!-- MODAL LOJA -->
-    <div id="modalLoja" class="modal">
-        <div class="modal-content">
-            <h3>LOJA DE DICAS 🛒</h3>
-            <p style="font-size: 12px; text-align: center;">Seu Saldo: 🪙 <span id="saldo-moedas-loja">0</span></p>
-            
-            <button id="b1" class="btn btn-secundario" onclick="buy(1)">Par ou Ímpar (30 🪙)</button>
-            <button id="b2" class="btn btn-secundario" onclick="buy(2)">Último Dígito (60 🪙)</button>
-            <button id="b3" class="btn btn-secundario" onclick="buy(3)">Margem Próxima (40 🪙)</button>
-            <button id="b5" class="btn btn-secundario" onclick="buy(5)">Múltiplo de 3 ou 5 (50 🪙)</button>
-            <button id="b4" class="btn btn-secundario" onclick="buy(4)">+2 Chances (80 🪙)</button>
-
-            <button class="btn" onclick="toggleLoja(false)">FECHAR</button>
-        </div>
-    </div>
-
-    <!-- MODAL TEMAS -->
-    <div id="modalTemas" class="modal">
-        <div class="modal-content">
-            <h3>TEMAS 🎨</h3>
-            <button class="btn btn-secundario" onclick="mudarTema('tema-padrao')">Padrão Roxo</button>
-            <button class="btn btn-secundario" onclick="mudarTema('tema-cyberpunk')">Cyberpunk</button>
-            <button class="btn btn-secundario" onclick="mudarTema('tema-neon')">Neon Matrix</button>
-            <button class="btn btn-secundario" onclick="mudarTema('tema-retro')">Rêtro Ouro</button>
-            <button class="btn" onclick="toggleTemaModal(false)">FECHAR</button>
-        </div>
+    <div id="modalLoja" class="modal-loja">
+        <div class="titulo-secao">LOJA DE DICAS</div>
+        <button class="btn-acao" onclick="buy(1)">Par ou Ímpar (30 $)</button>
+        <button class="btn-acao" onclick="buy(2)">Último Dígito (60 $)</button>
+        <button class="btn-acao" onclick="buy(4)">+2 Chances (80 $)</button>
+        <button class="btn-acao" style="border-color: #ff0055; color: #ff0055;" onclick="toggleLoja(false)">FECHAR</button>
     </div>
 
     <script>
@@ -470,513 +297,144 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        let audioCtx = null;
-        let somAtivo = true;
-
-        function tocarSom(freq, tipo, duracao) {
-            if (!somAtivo) return;
-            try {
-                if (!audioCtx) audioCtx = new AudioContext();
-                let osc = audioCtx.createOscillator();
-                let gain = audioCtx.createGain();
-                osc.type = tipo || "sine";
-                osc.frequency.value = freq;
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duracao);
-                osc.stop(audioCtx.currentTime + duracao);
-            } catch(e){}
-        }
-
-        function somClique() { tocarSom(400, "square", 0.05); }
-        function somAcerto() { tocarSom(600, "sine", 0.1); setTimeout(() => tocarSom(900, "sine", 0.2), 100); }
-        function somErro() { tocarSom(180, "sawtooth", 0.15); }
-        function somCompra() { tocarSom(800, "triangle", 0.1); setTimeout(() => tocarSom(1200, "triangle", 0.15), 80); }
-
-        function toggleSom() {
-            somAtivo = !somAtivo;
-            $("btn-som").textContent = somAtivo ? "🔊" : "🔇";
-        }
-
-        const patentes = [
-            { nome: "Sem Rank", icone: "❓", classe: "" },
-            { nome: "BRONZE I", icone: "🥉", classe: "patente-1" },
-            { nome: "BRONZE II", icone: "🥉", classe: "patente-1" },
-            { nome: "PRATA I", icone: "🥈", classe: "patente-2" },
-            { nome: "PRATA II", icone: "🥈", classe: "patente-2" },
-            { nome: "OURO I", icone: "🥇", classe: "patente-3" },
-            { nome: "OURO II", icone: "🥇", classe: "patente-3" },
-            { nome: "PLATINA", icone: "💎", classe: "patente-4" },
-            { nome: "DIAMANTE", icone: "🔷", classe: "patente-5" },
-            { nome: "ELITE", icone: "⭐", classe: "patente-5" },
-            { nome: "MESTRE SUPREMO", icone: "👑", classe: "patente-6" }
-        ];
-
-        const conquistasLista = [
-            { id: "sniper", nome: "🎯 Sniper", desc: "Acertou um número de primeira!" },
-            { id: "flash", nome: "⚡ Flash", desc: "Acertou em menos de 5 segundos!" },
-            { id: "consumista", nome: "🛒 Consumista", desc: "Comprou um item na loja!" },
-            { id: "mestre", nome: "👑 Lenda Suprema", desc: "Alcançou a patente Mestre (Level 10)!" }
-        ];
-
-        let conquistasDesbloqueadas = new Set();
-        let stats = { partidas: 0, vitorias: 0 };
-
-        const configuracaoNiveis = [
-            null,
-            { max: 15, chances: 8, tempoLimite: null },
-            { max: 25, chances: 8, tempoLimite: null },
-            { max: 40, chances: 7, tempoLimite: null },
-            { max: 55, chances: 7, tempoLimite: null },
-            { max: 70, chances: 6, tempoLimite: null },
-            { max: 85, chances: 6, tempoLimite: 30 },
-            { max: 100, chances: 6, tempoLimite: 25 },
-            { max: 115, chances: 5, tempoLimite: 20 },
-            { max: 130, chances: 5, tempoLimite: 15 },
-            { max: 150, chances: 5, tempoLimite: 12 }
-        ];
-
-        let lvl = 1, num = 0, ch = 0, maxNum = 10, moedas = 0, ativo = false;
-        let modoAtual = 1, p1 = "", p2 = "", pVez = 1;
-        let chutesNoLevel = 0, totalChutesGerais = 0;
-        let tempoInicio = 0, tempoGasto = 0, timerInterval = null, tempoRestanteLvl = 20;
-        let historicoChutes = [];
-        let pontuacaoTotalCampanha = 0;
-
-        let relampagoPontos = 0;
-        let relampagoTempoRestante = 60;
-        let relampagoTimer = null;
-        let relampagoNumSecreto = 0;
-
-        let progresso = {
-            maxDesbloqueado: 1,
-            estrelas: { 1: "---", 2: "---", 3: "---", 4: "---", 5: "---", 6: "---", 7: "---", 8: "---", 9: "---", 10: "---" }
-        };
+        let lvl = 1, num = 0, ch = 0, maxNum = 15, moedas = 0;
+        let chutesNoLevel = 0, pontuacaoTotal = 0;
+        let progresso = { maxDesbloqueado: 1 };
 
         function $(id) { return document.getElementById(id); }
 
         function carregarRankings() {
-            db.ref("ranking").orderByChild("modo").equalTo("campanha").limitToLast(5).on("value", (snapshot) => {
-                preencherListaRank(snapshot, "lista-campanha", "pts");
-            });
-            db.ref("ranking").orderByChild("modo").equalTo("duelo").limitToLast(5).on("value", (snapshot) => {
-                preencherListaRank(snapshot, "lista-duelo", "pts");
-            });
-            db.ref("ranking").orderByChild("modo").equalTo("relampago").limitToLast(5).on("value", (snapshot) => {
-                preencherListaRank(snapshot, "lista-relampago", "pts");
-            });
-        }
-
-        function preencherListaRank(snapshot, elementId, unidade) {
-            let el = $(elementId);
-            if (!snapshot.exists()) {
-                el.innerHTML = '<li style="color:#555;text-align:center">Sem registros</li>';
-                return;
-            }
-            let arrayValores = [];
-            snapshot.forEach((child) => { arrayValores.push(child.val()); });
-            arrayValores.sort((a, b) => b.score - a.score);
-
-            let html = "";
-            arrayValores.forEach((p, index) => {
-                html += `<li class="podio-${index < 3 ? index : 'x'}">
-                    <span>#${index+1} ${p.nome}</span>
-                    <span>${p.score} ${unidade}</span>
-                </li>`;
-            });
-            el.innerHTML = html;
-        }
-
-        carregarRankings();
-
-        function selecionarModo(m) {
-            somClique();
-            modoAtual = m;
-            $("t0").style.display = 'none';
-            $("t1").style.display = 'flex';
-            $("titulo-login").textContent = m === 2 ? "NOME DOS JOGADORES" : "SEU NOME";
-            $("nick2").style.display = m === 2 ? "block" : "none";
-            $("nick1").focus();
-        }
-
-        function logar() {
-            somClique();
-            p1 = $("nick1").value.trim();
-            p2 = $("nick2").value.trim();
-            if (!p1 || (modoAtual === 2 && !p2)) return;
-
-            moedas = 0; totalChutesGerais = 0; ativo = true; pVez = 1;
-            pontuacaoTotalCampanha = 0;
-            $("t1").style.display = "none";
-            $("hud-topo").style.display = "flex";
-            irParaMapa();
-        }
-
-        function iniciarModoRelampago() {
-            somClique();
-            let nomeJogador = prompt("Digite seu nome para o Desafio Relâmpago:", "Visitante");
-            if (!nomeJogador || nomeJogador.trim() === "") nomeJogador = "Visitante";
-            p1 = nomeJogador.trim();
-
-            $("t0").style.display = "none";
-            $("t-relampago").style.display = "flex";
-            $("hud-topo").style.display = "none";
-
-            relampagoPontos = 0;
-            relampagoTempoRestante = 60;
-            $("relampago-pontos").textContent = relampagoPontos;
-            $("relampago-tempo").textContent = relampagoTempoRestante;
-            
-            proximaRodadaRelampago();
-
-            clearInterval(relampagoTimer);
-            relampagoTimer = setInterval(() => {
-                relampagoTempoRestante--;
-                $("relampago-tempo").textContent = relampagoTempoRestante;
-                if (relampagoTempoRestante <= 0) {
-                    clearInterval(relampagoTimer);
-                    fimModoRelampago();
+            db.ref("ranking").orderByChild("score").limitToLast(3).on("value", (snapshot) => {
+                let el = $("lista-recordes");
+                if (!snapshot.exists()) {
+                    el.innerHTML = "Sem recordes";
+                    return;
                 }
-            }, 1000);
-        }
-
-        function proximaRodadaRelampago() {
-            relampagoNumSecreto = Math.floor(Math.random() * 50) + 1;
-            $("msg-relampago").textContent = "";
-            $("chute-relampago").value = "";
-            $("chute-relampago").focus();
-        }
-
-        function chutarRelampago() {
-            let chute = Number($("chute-relampago").value);
-            let msg = $("msg-relampago");
-            if (!chute) return;
-
-            if (chute === relampagoNumSecreto) {
-                somAcerto();
-                relampagoPontos++;
-                $("relampago-pontos").textContent = relampagoPontos;
-                msg.style.color = "#00ff00";
-                msg.textContent = "CORRETO! Próximo número...";
-                confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
-                setTimeout(proximaRodadaRelampago, 800);
-            } else {
-                somErro();
-                msg.style.color = "#ff0055";
-                msg.textContent = chute < relampagoNumSecreto ? "MAIOR ↑" : "MENOR ↓";
-                $("chute-relampago").value = "";
-                $("chute-relampago").focus();
-            }
-        }
-
-        function fimModoRelampago() {
-            somAcerto();
-            alert(`Tempo esgotado! Você fez ${relampagoPontos} pontos no Desafio Relâmpago!`);
-            db.ref("ranking").push({
-                nome: p1,
-                score: relampagoPontos,
-                modo: "relampago",
-                data: Date.now()
+                let arr = [];
+                snapshot.forEach(c => arr.push(c.val()));
+                arr.sort((a,b) => b.score - a.score);
+                let html = "<ul style='padding:0;'>";
+                arr.forEach(p => {
+                    html += `<li><span>${p.nome}</span> <span>${p.score}pts</span></li>`;
+                });
+                html += "</ul>";
+                el.innerHTML = html;
             });
-            voltarMenu();
         }
-
-        function irParaMapa() {
-            $("t2").style.display = "none";
-            $("t-res").style.display = "none";
-            $("t-conquistas").style.display = "none";
-            $("t-relampago").style.display = "none";
-            $("painel-chutes").style.display = "none";
-            $("t-map").style.display = "flex";
-            renderizarMapa();
-        }
+        carregarRankings();
 
         function renderizarMapa() {
             let grid = $("grid-levels");
             grid.innerHTML = "";
-            for (let i = 1; i <= 10; i++) {
+            for (let i = 1; i <= 6; i++) {
                 let desbloqueado = i <= progresso.maxDesbloqueado;
                 let card = document.createElement("div");
-                card.className = `card-level ${desbloqueado ? '' : 'bloqueado'} ${i === 10 ? 'lvl-10' : ''}`;
-                let pat = patentes[i];
-
+                card.className = `card-fase ${desbloqueado ? (i === 1 ? 'ativa' : '') : 'derrota'}`;
+                
                 if (desbloqueado) {
-                    card.innerHTML = `
-                        <div class="num-lvl">${i}</div>
-                        <div class="stars-lvl">${progresso.estrelas[i]}</div>
-                        <div class="tag-patente ${pat.classe}">${pat.icone} ${pat.nome}</div>
-                    `;
-                    card.onclick = () => { somClique(); iniciarNivel(i); };
+                    card.innerHTML = `<div class="num-fase">${i}</div><div class="sub-fase">---</div>`;
+                    card.onclick = () => iniciarNivel(i);
                 } else {
-                    card.innerHTML = `<div class="cadeado-icon">🔒</div><div class="stars-lvl">---</div><div class="tag-patente" style="color:#555">${pat.nome}</div>`;
+                    card.innerHTML = `<div class="icone-fase">🔒</div><div class="sub-fase">---</div>`;
                 }
                 grid.appendChild(card);
             }
         }
 
-        function iniciarNivel(nivelSelecionado) {
-            lvl = nivelSelecionado;
-            $("t-map").style.display = "none";
-            $("t2").style.display = "flex";
-            $("painel-chutes").style.display = "block";
-            fase();
-        }
-
-        function fase() {
-            const config = configuracaoNiveis[lvl];
-            maxNum = config.max; ch = config.chances;
+        function iniciarNivel(n) {
+            lvl = n;
+            maxNum = 10 + (n * 5);
+            ch = 8 - Math.floor(n / 2);
             num = Math.floor(Math.random() * maxNum) + 1;
-            chutesNoLevel = 0; historicoChutes = [];
-            atualizarPainelChutes();
-            tempoInicio = Date.now();
-            clearInterval(timerInterval);
+            chutesNoLevel = 0;
 
-            if (config.tempoLimite) {
-                $("timer-display").style.display = "block";
-                tempoRestanteLvl = config.tempoLimite;
-                $("tempo-restante").textContent = tempoRestanteLvl;
-                timerInterval = setInterval(() => {
-                    tempoRestanteLvl--;
-                    $("tempo-restante").textContent = tempoRestanteLvl;
-                    if (tempoRestanteLvl <= 0) { clearInterval(timerInterval); gameOverTempo(); }
-                }, 1000);
-            } else {
-                $("timer-display").style.display = "none";
-            }
-
-            $("btn-chutar").disabled = false;
+            $("tela-mapa").style.display = "none";
+            $("tela-jogo").style.display = "flex";
+            $("lvl-titulo").textContent = `LEVEL ${lvl}`;
+            $("instrucao-jogo").textContent = `Adivinhe de 1 a ${maxNum}`;
+            $("status-chances").textContent = `Chances: ${ch}`;
+            $("msg-feedback").textContent = "";
             $("info-dica").textContent = "";
-            ui();
-        }
-
-        function toggleLoja(abrir) { 
-            somClique(); 
-            $("modalLoja").style.display = abrir ? "flex" : "none"; 
-            if(abrir) $("saldo-moedas-loja").textContent = moedas;
-        }
-        function toggleTemaModal(abrir) { somClique(); $("modalTemas").style.display = abrir ? "flex" : "none"; }
-        
-        function mudarTema(nomeTema) {
-            somClique();
-            document.body.className = nomeTema;
-            toggleTemaModal(false);
-        }
-
-        function ui() {
-            $("lvl").textContent = `LEVEL ${lvl}/10`;
-            $("instrucao").textContent = `Adivinhe de 1 a ${maxNum}`;
-            let patInfo = patentes[lvl];
-            $("patente-player").innerHTML = `Patente em jogo: <span class="${patInfo.classe}">${patInfo.icone} ${patInfo.nome}</span>`;
-            $("vez-player").style.display = modoAtual === 2 ? "block" : "none";
-            if (modoAtual === 2) $("vez-player").textContent = `TURNO DE: ${pVez === 1 ? p1 : p2}`;
-            upLoja();
-            $("status").textContent = `Chances Restantes: ${ch}`;
-            $("msg").textContent = $("chute").value = "";
-            $("chute").focus();
-        }
-
-        function upLoja() {
-            $("saldo-moedas").textContent = moedas;
-            $("b1").disabled = !ativo || moedas < 30;
-            $("b2").disabled = !ativo || moedas < 60;
-            $("b3").disabled = !ativo || moedas < 40;
-            $("b5").disabled = !ativo || moedas < 50;
-            $("b4").disabled = !ativo || moedas < 80;
-        }
-
-        function buy(tipo) {
-            let txt = $("info-dica");
-            desbloquearConquista("consumista");
-            somCompra();
-            if (tipo === 1 && moedas >= 30) { moedas -= 30; txt.textContent = `💡 O número é ${(num % 2 === 0) ? "PAR" : "ÍMPAR"}`; } 
-            if (tipo === 2 && moedas >= 60) { moedas -= 60; txt.textContent = `🔍 O último dígito é ${num % 10}`; }
-            if (tipo === 3 && moedas >= 40) { 
-                moedas -= 40; 
-                let minF = Math.max(1, num - Math.floor(Math.random()*4 + 2));
-                let maxF = Math.min(maxNum, num + Math.floor(Math.random()*4 + 2));
-                txt.textContent = `📐 O número está entre ${minF} e ${maxF}`; 
-            }
-            if (tipo === 5 && moedas >= 50) { 
-                moedas -= 50; 
-                let mult = (num % 3 === 0) ? "3" : ((num % 5 === 0) ? "5" : "NENHUM");
-                txt.textContent = `🔢 Múltiplo de: ${mult}`; 
-            }
-            if (tipo === 4 && moedas >= 80) { moedas -= 80; ch += 2; txt.textContent = `❤️ +2 CHANCES!`; $("status").textContent = `Chances: ${ch}`; }
-            upLoja();
-            $("saldo-moedas-loja").textContent = moedas;
+            $("chute").value = "";
+            $("btn-chutar").disabled = false;
         }
 
         function chutar() {
-            if ($("btn-chutar").disabled) return;
-            let p = Number($("chute").value), m = $("msg");
-            if (!p || p < 1 || p > maxNum) return m.textContent = `De 1 a ${maxNum}!`;
-            
-            if (historicoChutes.some(item => item.numero === p)) {
-                somErro();
-                m.style.color = "#ffcc00"; m.textContent = "⚠️ NÚMERO JÁ CHUTADO!";
-                $("chute").value = ""; $("chute").focus();
-                return;
-            }
+            let p = Number($("chute").value);
+            if (!p) return;
 
-            ch--; chutesNoLevel++; totalChutesGerais++;
-            let jogadorAtual = modoAtual === 2 ? (pVez === 1 ? p1 : p2) : p1;
+            ch--;
+            chutesNoLevel++;
+            $("status-chances").textContent = `Chances: ${ch}`;
 
             if (p === num) {
-                clearInterval(timerInterval);
+                moedas += 10 + (lvl * 5);
+                $("saldo-moedas").textContent = moedas;
+                $("msg-feedback").style.color = "#00d8ff";
+                $("msg-feedback").textContent = "CORRETO!";
                 $("btn-chutar").disabled = true;
-                tempoGasto = Math.round((Date.now() - tempoInicio) / 1000);
-                moedas += 15 + (lvl * 5);
-                stats.partidas++; stats.vitorias++; atualizarStats();
-                upLoja();
-                somAcerto();
-                
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
 
-                if (chutesNoLevel === 1) desbloquearConquista("sniper");
-                if (tempoGasto < 5) desbloquearConquista("flash");
-                if (lvl === 10) desbloquearConquista("mestre");
+                pontuacaoTotal += Math.max(10, 100 - (chutesNoLevel * 10));
 
-                let pontuacaoFase = Math.max(10, 100 - (chutesNoLevel * 5) - (tempoGasto));
-                pontuacaoTotalCampanha += pontuacaoFase;
+                if (lvl === progresso.maxDesbloqueado && progresso.maxDesbloqueado < 6) {
+                    progresso.maxDesbloqueado++;
+                }
 
-                // SALVA NO RANKING APENAS SE FOR O LEVEL 10
-                if (lvl === 10) {
-                    let modoStr = modoAtual === 1 ? "campanha" : "duelo";
+                // Salva no banco APENAS no ZERAR (Level 6)
+                if (lvl === 6) {
+                    let nome = prompt("Você zerou! Digite seu nome para o ranking:", "Jogador") || "Jogador";
                     db.ref("ranking").push({
-                        nome: jogadorAtual,
-                        score: pontuacaoTotalCampanha,
-                        modo: modoStr,
+                        nome: nome,
+                        score: pontuacaoTotal,
                         data: Date.now()
                     });
                 }
 
-                historicoChutes.unshift({ numero: p, dica: "ACERTOU!" });
-                atualizarPainelChutes();
-                exibirResultadoLevel();
+                setTimeout(irParaMapa, 1500);
             } else {
-                somErro();
-                let dicaTexto = p < num ? "MAIOR ↑" : "MENOR ↓";
-                m.style.color = p < num ? "#00ffaa" : "#ff9900";
-                m.textContent = `O número é ${dicaTexto}`;
-
-                historicoChutes.unshift({ numero: p, dica: dicaTexto });
-                atualizarPainelChutes();
+                $("msg-feedback").style.color = "#ff0055";
+                $("msg-feedback").textContent = p < num ? "MAIOR ↑" : "MENOR ↓";
 
                 if (ch <= 0) {
-                    clearInterval(timerInterval);
-                    m.style.color = "#ff0055";
-                    m.textContent = `GAMEOVER! O número era ${num}`;
+                    $("msg-feedback").textContent = `GAMEOVER! Era ${num}`;
                     $("btn-chutar").disabled = true;
-                    stats.partidas++;
-                    atualizarStats();
-                } else {
-                    $("status").textContent = `Chances Restantes: ${ch}`;
-                    if (modoAtual === 2) {
-                        pVez = pVez === 1 ? 2 : 1;
-                        $("vez-player").textContent = `TURNO DE: ${pVez === 1 ? p1 : p2}`;
-                    }
+                    setTimeout(irParaMapa, 2000);
                 }
             }
             $("chute").value = "";
-            $("chute").focus();
         }
 
-        function gameOverTempo() {
-            somErro();
-            let m = $("msg");
-            m.style.color = "#ff0055";
-            m.textContent = `TEMPO ESGOTADO! O número era ${num}`;
-            $("btn-chutar").disabled = true;
-            stats.partidas++;
-            atualizarStats();
+        function irParaMapa() {
+            $("tela-jogo").style.display = "none";
+            $("tela-mapa").style.display = "flex";
+            renderizarMapa();
         }
 
-        function atualizarPainelChutes() {
-            let lista = $("lista-chutes");
-            if (historicoChutes.length === 0) {
-                lista.innerHTML = '<li style="color:#555;text-align:center">Nenhum chute ainda</li>';
-                return;
+        function toggleLoja(abrir) {
+            $("modalLoja").style.display = abrir ? "flex" : "none";
+        }
+
+        function buy(tipo) {
+            if (tipo === 1 && moedas >= 30) {
+                moedas -= 30;
+                $("info-dica").textContent = `💡 O número é ${(num % 2 === 0) ? "PAR" : "ÍMPAR"}`;
+            } else if (tipo === 2 && moedas >= 60) {
+                moedas -= 60;
+                $("info-dica").textContent = `🔍 Termina em ${num % 10}`;
+            } else if (tipo === 4 && moedas >= 80) {
+                moedas -= 80;
+                ch += 2;
+                $("status-chances").textContent = `Chances: ${ch}`;
             }
-            let html = "";
-            historicoChutes.forEach(item => {
-                let classe = item.dica.includes("MAIOR") ? "dica-maior" : (item.dica.includes("MENOR") ? "dica-menor" : "");
-                html += `<li><span>Chute: <strong>${item.numero}</strong></span> <span class="${classe}">${item.dica}</span></li>`;
-            });
-            lista.innerHTML = html;
-        }
-
-        function atualizarStats() {
-            if($("st-partidas")) $("st-partidas").textContent = stats.partidas;
-            if($("st-vitorias")) $("st-vitorias").textContent = stats.vitorias;
-            let taxa = stats.partidas > 0 ? Math.round((stats.vitorias / stats.partidas) * 100) : 0;
-            if($("st-taxa")) $("st-taxa").textContent = `${taxa}%`;
-        }
-
-        function exibirResultadoLevel() {
-            $("t2").style.display = "none";
-            $("painel-chutes").style.display = "none";
-            $("t-res").style.display = "flex";
-
-            let config = configuracaoNiveis[lvl];
-            let estrelasCount = 1;
-            if (chutesNoLevel <= Math.ceil(config.chances / 3)) estrelasCount = 3;
-            else if (chutesNoLevel <= Math.ceil(config.chances / 1.5)) estrelasCount = 2;
-
-            let strEstrelas = "⭐".repeat(estrelasCount) + "☆".repeat(3 - estrelasCount);
-            progresso.estrelas[lvl] = strEstrelas;
-
-            if (lvl === progresso.maxDesbloqueado && progresso.maxDesbloqueado < 10) {
-                progresso.maxDesbloqueado++;
-            }
-
-            let patInfo = patentes[lvl];
-            $("res-titulo").textContent = lvl === 10 ? "JOGO ZERADO!" : `LEVEL ${lvl} CONCLUÍDO!`;
-            $("res-estrelas").textContent = strEstrelas;
-            $("res-patente").innerHTML = `🏅 Patente: <span class="${patInfo.classe}">${patInfo.icone} ${patInfo.nome}</span>`;
-            $("res-chutes").textContent = `🎯 Chutes Usados: ${chutesNoLevel}`;
-            $("res-tempo").textContent = `⏱️ Tempo: ${tempoGasto}s`;
-        }
-
-        function abrirConquistas() {
-            somClique();
-            $("t-map").style.display = "none";
-            $("t-conquistas").style.display = "flex";
-
-            let lista = $("lista-conquistas");
-            lista.innerHTML = "";
-            conquistasLista.forEach(c => {
-                let desbloqueada = conquistasDesbloqueadas.has(c.id);
-                lista.innerHTML += `
-                    <li style="opacity: ${desbloqueada ? '1' : '0.4'}">
-                        <div>
-                            <strong>${c.nome}</strong>
-                            <div style="font-size:10px; color:#aaa;">${c.desc}</div>
-                        </div>
-                        <span>${desbloqueada ? '✅' : '🔒'}</span>
-                    </li>
-                `;
-            });
-        }
-
-        function desbloquearConquista(id) {
-            if (!conquistasDesbloqueadas.has(id)) {
-                conquistasDesbloqueadas.add(id);
-            }
+            $("saldo-moedas").textContent = moedas;
+            toggleLoja(false);
         }
 
         function voltarMenu() {
-            somClique();
-            clearInterval(timerInterval);
-            clearInterval(relampagoTimer);
-            $("t-map").style.display = "none";
-            $("t2").style.display = "none";
-            $("t-relampago").style.display = "none";
-            $("painel-chutes").style.display = "none";
-            $("hud-topo").style.display = "none";
-            $("t0").style.display = "flex";
+            alert("Saindo do jogo...");
         }
+
+        renderizarMapa();
     </script>
 </body>
 </html>
