@@ -2,296 +2,311 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>JOGO DE ADIVINHAÇÃO - Ultimate Edition</title>
-    <!-- SDKs DO FIREBASE -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <!-- CANVAS CONFETTI -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Adivinhação</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Canvas Confetti para efeitos visuais -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         :root {
-            --primary: #00d8ff;
-            --secondary: #ff00ff;
-            --bg: #030303;
-            --panel-bg: rgba(11, 11, 11, 0.95);
+            --bg-color: #121214;
+            --card-bg: #202024;
+            --primary: #8257e5;
+            --text: #e1e1e6;
+            --accent: #00b37e;
+            --danger: #ff0055;
+            --warning: #ff9900;
         }
 
-        body.theme-cyberpunk { --primary: #ff0055; --secondary: #00ffff; }
-        body.theme-matrix { --primary: #00ff66; --secondary: #003300; }
-        body.theme-retro { --primary: #ffcc00; --secondary: #ff6600; }
-
-        body { 
-            font-family: monospace; 
-            margin: 0; 
-            background: var(--bg); 
-            color: var(--primary); 
-            display: flex; 
-            height: 100vh; 
-            overflow: hidden; 
-            position: relative;
-            transition: color 0.3s ease;
-        }
-        
-        .box { 
-            width: 100%; 
-            height: 100vh; 
-            background: #111; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            position: relative; 
-            box-sizing: border-box; 
-        }
-        .box::after { 
-            content: " "; 
-            display: block; 
-            position: absolute; 
-            top: 0; left: 0; bottom: 0; right: 0; 
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%); 
-            background-size: 100% 4px; 
-            pointer-events: none; 
-        }
-        
-        /* PAINEL DE RANKINGS MULTIPLOS */
-        .painel-ranks { 
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 280px; 
-            max-height: 90vh; 
-            overflow-y: auto; 
-            z-index: 5;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .rank-box {
-            background: var(--panel-bg); 
-            border: 2px solid var(--primary); 
-            padding: 10px 12px; 
+        /* Temas */
+        body.tema-neon {
+            --bg-color: #0d0221;
+            --card-bg: #0f0826;
+            --primary: #00f0ff;
+            --text: #ffffff;
+            --accent: #ff007f;
+        }
+
+        body.tema-retro {
+            --bg-color: #2b1d0c;
+            --card-bg: #3d2b15;
+            --primary: #ffb703;
+            --text: #fefae0;
+            --accent: #fb8500;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 10px 15px;
             border-radius: 8px;
-            box-sizing: border-box; 
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .painel-chutes { 
-            position: absolute;
-            top: 95px;
-            left: 25px;
-            width: 230px; 
-            background: var(--panel-bg); 
-            border: 2px solid var(--primary); 
-            padding: 15px; 
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #323238;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #323238;
+            background: #121214;
+            color: white;
+            box-sizing: border-box;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .tela {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: var(--card-bg);
+            padding: 20px;
             border-radius: 10px;
-            box-sizing: border-box; 
-            max-height: 70vh; 
-            overflow-y: auto; 
-            z-index: 5;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-            display: none;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        #t0, #t1, #t-map, #t2, #t-res, #t-conquistas, #t-relampago { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
-        h1 { font-size: 52px; margin: 0 0 20px; color: var(--primary); text-shadow: 4px 4px 0 #305; font-weight: 900; text-align: center; }
-        h3, h4, p { margin: 0 0 15px; text-align: center; }
-        h4 { font-size: 32px; margin-bottom: 5px; color: var(--secondary); }
-        input { padding: 12px; width: 230px; font-size: 22px; text-align: center; background: #1a1a1a; border: 2px solid var(--primary); color: #fff; font-weight: bold; border-radius: 6px; outline: none; margin-bottom: 15px; }
-        #chute, #chute-relampago { width: 160px; }
-        button { padding: 10px 25px; font-size: 15px; cursor: pointer; background: var(--primary); color: #000; font-weight: bold; border-radius: 6px; text-transform: uppercase; border: none; transition: transform 0.1s; }
-        button:hover { transform: scale(1.05); }
-        
-        .grid-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; justify-items: center; margin-top: 5px; max-width: 500px; }
-        .card-level { width: 85px; height: 85px; background: #181818; border: 2px solid var(--primary); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.2s, background 0.2s; position: relative; box-sizing: border-box; }
-        .card-level:hover:not(.bloqueado) { transform: scale(1.05); background: #222; }
-        .card-level.bloqueado { border-color: #444; background: #111; cursor: not-allowed; }
-        .card-level.bloqueado .cadeado-icon { font-size: 22px; opacity: 0.6; }
-        .card-level .num-lvl { font-size: 22px; font-weight: bold; color: var(--primary); }
-        .card-level .stars-lvl { font-size: 10px; margin-top: 2px; color: #ffd700; }
-        .card-level .tag-patente { font-size: 8px; margin-top: 1px; font-weight: bold; }
-        
-        .card-resultado { background: #0b0b0b; border: 2px solid var(--primary); padding: 25px; border-radius: 12px; text-align: center; width: 320px; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
-        .estrelas { font-size: 40px; margin: 10px 0; letter-spacing: 5px; color: #ffd700; }
-        .info-res { font-size: 16px; margin: 8px 0; color: #fff; }
+        .grid-levels {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
 
-        .btn-loja { width: 100%; padding: 10px; font-size: 11px; margin-top: 8px; background: transparent; border: 1px solid var(--primary); color: var(--primary); cursor: pointer; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
-        .btn-loja:disabled { border-color: #333!important; color: #555!important; cursor: not-allowed; }
-        #info-dica { text-align: center; font-weight: bold; margin-top: 10px; color: var(--primary); min-height: 25px; font-size: 13px; }
-        
-        .hud-topo { position: absolute; top: 20px; left: 25px; display: flex; align-items: center; gap: 10px; z-index: 5; }
-        .btn-hud { width: 45px; height: 45px; border-radius: 50%; background: #000; color: var(--primary); font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 2px solid var(--primary); transition: transform 0.2s; padding: 0; }
-        .btn-hud:hover { transform: scale(1.1); }
-        
-        .carteira-hud { background: rgba(11, 11, 11, 0.9); border: 2px solid #ffd700; color: #ffd700; padding: 6px 15px; border-radius: 25px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .moeda-redonda { width: 22px; height: 22px; background: radial-gradient(circle at 35% 35%, #ffe97d, #fbb021 60%, #c76f00 100%); border: 2px solid #fff59d; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #8c4a00; font-size: 12px; font-weight: 900; }
+        .card-level {
+            background: #29292e;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
 
-        .lista-rank { padding: 0; margin: 5px 0 0 0; list-style: none; display: flex; flex-direction: column; gap: 5px; max-height: 120px; overflow-y: auto; }
-        .lista-rank li, #lista-chutes li, #lista-conquistas li { display: flex; justify-content: space-between; gap: 10px; background: #181818; padding: 5px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,.05); font-size: 11px; color: #ddd; align-items: center; }
+        .card-level.bloqueado {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .card-level:not(.bloqueado):hover {
+            border-color: var(--primary);
+        }
+
+        .rank-list, .chutes-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rank-list li, .chutes-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: #121214;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .dica-maior { color: #00ffaa; }
+        .dica-menor { color: #ff9900; }
         
-        #lista-chutes, #lista-conquistas { padding: 0; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
-        #lista-chutes li, #lista-conquistas li { padding: 8px 12px; font-size: 12px; }
-
-        .podio-0 { border-left: 3px solid #ffd700; }
-        .podio-1 { border-left: 3px solid #c0c0c0; }
-        .podio-2 { border-left: 3px solid #cd7f32; }
-        .dica-maior { color: #00ffaa; font-weight: bold; }
-        .dica-menor { color: #ff9900; font-weight: bold; }
-
-        strong { font-size: 12px; display: block; margin-bottom: 4px; text-align: center; color: #fff; letter-spacing: 1px; }
-        .btn-modo { font-size:24px; font-weight:bold; color:var(--primary); margin-bottom:10px; cursor:pointer; }
-        .btn-modo:hover { text-shadow: 0 0 8px var(--primary); }
-        #vez-player { font-size: 20px; font-weight: bold; margin-bottom: 5px; color: #ff0; }
-        #patente-player { font-size: 14px; margin-bottom: 15px; }
-        #timer-display { font-size: 24px; font-weight: bold; color: #ff0000; display: none; margin-bottom: 10px; }
-
-        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; }
-        .modal-conteudo { background: #0b0b0b; border: 2px solid var(--primary); padding: 25px; border-radius: 8px; width: 330px; position: relative; }
-        .fechar-modal { position: absolute; top: 10px; right: 15px; color: #fff; font-size: 24px; font-weight: bold; cursor: pointer; }
-        
-        @keyframes b { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .patente-1 { color: #cd7f32; }
+        .patente-2 { color: #c0c0c0; }
+        .patente-3 { color: #ffd700; }
+        .patente-4 { color: #e5e4e2; }
+        .patente-5 { color: #00ffff; }
+        .patente-6 { color: #ff007f; }
     </style>
 </head>
-<body class="theme-neon">
+<body>
 
-<div class="box" id="painel-jogo">
-    <div class="hud-topo" id="hud-topo" style="display:none;">
-        <button class="btn-hud" onclick="toggleLoja(true)" title="Loja">🛒</button>
-        <button class="btn-hud" onclick="toggleTemaModal(true)" title="Skins de Tema">🎨</button>
-        <button class="btn-hud" id="btn-som" onclick="toggleSom()" title="Som On/Off">🔊</button>
-        <div class="carteira-hud" id="carteira">
-            <div class="moeda-redonda">$</div>
-            <span id="saldo-moedas">0</span>
+<div class="container">
+    <!-- HUD TOPO -->
+    <div id="hud-topo" class="hud" style="display: none;">
+        <div>🪙 Moedas: <span id="saldo-moedas">0</span></div>
+        <button id="btn-som" onclick="toggleSom()" style="background:none; border:none; font-size:20px; cursor:pointer;">🔊</button>
+        <button class="btn btn-secondary" onclick="toggleLoja(true)" style="width:auto; padding:5px 10px;">🛒 Loja</button>
+        <button class="btn btn-secondary" onclick="toggleTemaModal(true)" style="width:auto; padding:5px 10px;">🎨 Temas</button>
+    </div>
+
+    <!-- TELA MENU INICIAL (T0) -->
+    <div id="t0" class="tela">
+        <h1 style="text-align: center; margin:0;">Adivinhe o Número</h1>
+        <button class="btn" onclick="selecionarModo(1)">Modo Campanha</button>
+        <button class="btn" onclick="selecionarModo(2)">Modo Duelo (2 Players)</button>
+        <button class="btn" onclick="iniciarModoRelampago()">⚡ Modo Relâmpago</button>
+        
+        <h3>🏆 Rankings Gerais</h3>
+        <div style="font-size: 14px;">
+            <strong>Campanha (Completo):</strong>
+            <ul id="lista-campanha" class="rank-list"></ul>
+            <strong>Duelo:</strong>
+            <ul id="lista-duelo" class="rank-list"></ul>
+            <strong>Relâmpago:</strong>
+            <ul id="lista-relampago" class="rank-list"></ul>
         </div>
     </div>
 
-    <!-- TELA 0: MODO DE JOGO -->
-    <div id="t0">
-        <h1 id="tit">JOGO DE<br>ADIVINHAÇÃO</h1>
-        <div style="margin-bottom:20px; text-transform:uppercase; text-align:center;">
-            <div class="btn-modo" onclick="selecionarModo(1)">&gt; 1 PLAYER (CAMPANHA)</div>
-            <div class="btn-modo" style="color:var(--secondary);" onclick="selecionarModo(2)">&gt; 2 PLAYERS (DUELO)</div>
-            <div class="btn-modo" style="color:#ffd700;" onclick="iniciarModoRelampago()">&gt; ⚡ DESAFIO RELÂMPAGO</div>
+    <!-- TELA LOGIN (T1) -->
+    <div id="t1" class="tela" style="display: none;">
+        <h2 id="titulo-login">SEU NOME</h2>
+        <input type="text" id="nick1" placeholder="Jogador 1">
+        <input type="text" id="nick2" placeholder="Jogador 2" style="display: none;">
+        <button class="btn" onclick="logar()">Continuar</button>
+        <button class="btn btn-secondary" onclick="voltarMenu()">Voltar</button>
+    </div>
+
+    <!-- MAPA DE FASES -->
+    <div id="t-map" class="tela" style="display: none;">
+        <h2>Selecione o Level</h2>
+        <div id="grid-levels" class="grid-levels"></div>
+        <button class="btn btn-secondary" onclick="abrirConquistas()">🏅 Conquistas</button>
+        <button class="btn btn-secondary" onclick="voltarMenu()">Menu Principal</button>
+    </div>
+
+    <!-- TELA DO JOGO (T2) -->
+    <div id="t2" class="tela" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="lvl" style="margin:0;">LEVEL 1</h3>
+            <span id="timer-display" style="display:none; color:var(--danger); font-weight:bold;">⏱️ <span id="tempo-restante">0</span>s</span>
         </div>
-        <div style="font-size:18px; font-weight:bold; color:var(--primary); animation:b 1.5s infinite; letter-spacing:3px;">ESCOLHA O MODO</div>
+        <p id="instrucao" style="margin:5px 0;">Adivinhe de 1 a 10</p>
+        <div id="patente-player" style="font-size: 12px;"></div>
+        <div id="vez-player" style="font-size: 14px; font-weight: bold; color: var(--primary); display: none;"></div>
+        
+        <input type="number" id="chute" placeholder="Digite seu palpite...">
+        <button id="btn-chutar" class="btn" onclick="chutar()">Chutar</button>
+        
+        <div id="status" style="font-weight: bold;">Chances Restantes: 0</div>
+        <div id="msg" style="min-height: 24px; font-weight: bold;"></div>
+        <div id="info-dica" style="color: var(--accent); font-size: 14px;"></div>
     </div>
 
-    <!-- TELA 1: LOGIN -->
-    <div id="t1" style="display:none">
-        <h3 id="titulo-login">SEU NOME</h3>
-        <input type="text" id="nick1" placeholder="PLAYER 1" onkeydown="if(event.key==='Enter') logar()" autocomplete="off">
-        <input type="text" id="nick2" placeholder="PLAYER 2" style="display:none" onkeydown="if(event.key==='Enter') logar()" autocomplete="off">
-        <button onclick="logar()">CONTINUAR</button>
+    <!-- PAINEL HISTÓRICO DE CHUTES -->
+    <div id="painel-chutes" class="tela" style="display: none;">
+        <h4>Histórico do Level</h4>
+        <ul id="lista-chutes" class="chutes-list"></ul>
     </div>
 
-    <!-- TELA DO MAPA DE FASES -->
-    <div id="t-map" style="display:none">
-        <h2 style="margin-bottom: 10px;">SELEÇÃO DE FASES (1-10)</h2>
-        <div class="grid-levels" id="grid-levels"></div>
-        <div style="margin-top:15px; display:flex; gap:10px; flex-wrap: wrap; justify-content: center;">
-            <button onclick="abrirConquistas()">🏆 CONQUISTAS</button>
-            <button style="background: transparent; border: 1px solid #555; color: #888;" onclick="voltarMenu()">SAIR</button>
+    <!-- TELA MODO RELÂMPAGO -->
+    <div id="t-relampago" class="tela" style="display: none;">
+        <h2>⚡ Modo Relâmpago</h2>
+        <div>Pontos: <strong id="relampago-pontos" style="color: var(--accent);">0</strong></div>
+        <div>Tempo Restante: <strong id="relampago-tempo" style="color: var(--danger);">60</strong>s</div>
+        <br>
+        <input type="number" id="chute-relampago" placeholder="Número (1 a 50)">
+        <button class="btn" onclick="chutarRelampago()">Chutar</button>
+        <div id="msg-relampago" style="min-height: 24px; font-weight: bold; margin-top: 10px;"></div>
+    </div>
+
+    <!-- RESULTADO DO LEVEL -->
+    <div id="t-res" class="tela" style="display: none; text-align: center;">
+        <h2 id="res-titulo">LEVEL CONCLUÍDO!</h2>
+        <div id="res-estrelas" style="font-size: 24px;"></div>
+        <p id="res-patente"></p>
+        <p id="res-chutes"></p>
+        <p id="res-tempo"></p>
+        <button class="btn" onclick="irParaMapa()">Ir ao Mapa</button>
+    </div>
+
+    <!-- CONQUISTAS -->
+    <div id="t-conquistas" class="tela" style="display: none;">
+        <h2>🏅 Conquistas</h2>
+        <ul id="lista-conquistas" class="rank-list"></ul>
+        <div style="margin-top: 10px; font-size: 14px;">
+            Partidas: <span id="st-partidas">0</span> | Vitórias: <span id="st-vitorias">0</span> | Taxa: <span id="st-taxa">0%</span>
         </div>
-    </div>
-
-    <!-- TELA 2: GAMEPLAY CAMPANHA -->
-    <div id="t2" style="display:none">
-        <div id="vez-player"></div>
-        <div id="patente-player"></div>
-        <div id="timer-display">⏱️ TEMPO: <span id="tempo-restante">25</span>s</div>
-        <h4 id="lvl">LEVEL 1</h4>
-        <p id="instrucao">Adivinhe o número</p>
-        <input type="number" id="chute" onkeydown="if(event.key==='Enter') chutar()">
-        <button id="btn-chutar" onclick="chutar()">CHUTAR</button>
-        <p id="msg" style="font-weight:bold; min-height:30px; margin-top:15px; font-size:18px;"></p>
-        <p id="status" style="margin:0;"></p>
-    </div>
-
-    <!-- TELA 3: DESAFIO RELÂMPAGO -->
-    <div id="t-relampago" style="display:none">
-        <h2 style="color:#ffd700; margin-bottom:5px;">⚡ DESAFIO RELÂMPAGO</h2>
-        <p style="font-size:14px; color:#aaa;">Acerte o máximo de números possíveis em 60 segundos!</p>
-        <div style="font-size:28px; font-weight:bold; color:#ff0000; margin-bottom:10px;">⏳ <span id="relampago-tempo">60</span>s</div>
-        <div style="font-size:20px; font-weight:bold; color:#00ff00; margin-bottom:15px;">🎯 Acertos: <span id="relampago-pontos">0</span></div>
-        <h4 id="relampago-instrucao" style="color:var(--primary);">Adivinhe de 1 a 50</h4>
-        <input type="number" id="chute-relampago" onkeydown="if(event.key==='Enter') chutarRelampago()">
-        <button onclick="chutarRelampago()">CHUTAR</button>
-        <p id="msg-relampago" style="font-weight:bold; min-height:30px; margin-top:15px; font-size:18px;"></p>
-        <button style="margin-top:20px; background:transparent; border:1px solid #555; color:#888;" onclick="voltarMenu()">SAIR</button>
-    </div>
-
-    <!-- TELA RESULTADO -->
-    <div id="t-res" style="display:none">
-        <div class="card-resultado">
-            <h2 id="res-titulo" style="color:#00ff00; margin-top:0;">LEVEL CONCLUÍDO!</h2>
-            <div class="estrelas" id="res-estrelas">⭐⭐⭐</div>
-            <div class="info-res" id="res-patente">🏅 Patente: Bronze</div>
-            <div class="info-res" id="res-chutes">🎯 Chutes: 0</div>
-            <div class="info-res" id="res-tempo">⏱️ Tempo: 0s</div>
-            <button id="btn-proximo" style="margin-top: 15px;" onclick="irParaMapa()">VOLTAR AO MAPA</button>
-        </div>
-    </div>
-
-    <!-- TELA DE CONQUISTAS -->
-    <div id="t-conquistas" style="display:none">
-        <div class="card-resultado" style="width:340px;">
-            <h2 style="color:var(--primary); margin-top:0;">🏆 CONQUISTAS</h2>
-            <ul id="lista-conquistas"></ul>
-            <button style="margin-top: 15px;" onclick="irParaMapa()">VOLTAR</button>
-        </div>
+        <button class="btn btn-secondary" onclick="irParaMapa()" style="margin-top: 10px;">Voltar</button>
     </div>
 </div>
 
-<div class="painel-chutes" id="painel-chutes">
-    <strong>📊 ESTATÍSTICAS</strong>
-    <div id="stats-box" style="font-size:11px; margin-bottom:15px; color:#aaa; line-height:1.6;">
-        Partidas: <span id="st-partidas" style="color:#fff">0</span> | Vitórias: <span id="st-vitorias" style="color:#00ff00">0</span><br>
-        Taxa de Vitória: <span id="st-taxa" style="color:#ffd700">0%</span>
-    </div>
-    <strong>🎯 CHUTES DO LEVEL</strong>
-    <ul id="lista-chutes">
-        <li style="color:#555;text-align:center">Nenhum chute ainda</li>
-    </ul>
-</div>
-
-<!-- OS 3 RANKINGS NA TELA -->
-<div class="painel-ranks" id="painel-ranks">
-    <div class="rank-box">
-        <strong>🛡️ RANK: CAMPANHA (1P)</strong>
-        <ul id="lista-campanha" class="lista-rank"><li>Carregando...</li></ul>
-    </div>
-    <div class="rank-box">
-        <strong>⚔️ RANK: DUELO (2P)</strong>
-        <ul id="lista-duelo" class="lista-rank"><li>Carregando...</li></ul>
-    </div>
-    <div class="rank-box">
-        <strong>⚡ RANK: RELÂMPAGO</strong>
-        <ul id="lista-relampago" class="lista-rank"><li>Carregando...</li></ul>
+<!-- MODAL LOJA -->
+<div id="modalLoja" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>🛒 Loja de Dicas</h3>
+        <button id="b1" class="btn" onclick="buy(1)">Par / Ímpar (30 Moedas)</button><br><br>
+        <button id="b2" class="btn" onclick="buy(2)">Último Dígito (60 Moedas)</button><br><br>
+        <button id="b3" class="btn" onclick="buy(3)">Intervalo Curto (40 Moedas)</button><br><br>
+        <button id="b5" class="btn" onclick="buy(5)">Múltiplo de 3 ou 5 (50 Moedas)</button><br><br>
+        <button id="b4" class="btn" onclick="buy(4)">+2 Chances (80 Moedas)</button><br><br>
+        <button class="btn btn-secondary" onclick="toggleLoja(false)">Fechar</button>
     </div>
 </div>
 
-<div class="modal" id="modalLoja">
-    <div class="modal-conteudo">
-        <span class="fechar-modal" onclick="toggleLoja(false)">&times;</span>
-        <strong>🏪 LOJA DE DICAS</strong>
-        <button class="btn-loja" id="b1" onclick="buy(1)">💡 PAR OU ÍMPAR (30 Moedas)</button>
-        <button class="btn-loja" id="b2" onclick="buy(2)">🔍 ÚLTIMO DÍGITO (60 Moedas)</button>
-        <button class="btn-loja" id="b3" onclick="buy(3)">📐 FAIXA CURTA (40 Moedas)</button>
-        <button class="btn-loja" id="b5" onclick="buy(5)">🔢 MULTIPLICIDADE (50 Moedas)</button>
-        <button class="btn-loja" id="b4" onclick="buy(4)">❤️ CHANCE EXTRA +2 (80 Moedas)</button>
-        <div id="info-dica"></div>
-    </div>
-</div>
-
-<div class="modal" id="modalTemas">
-    <div class="modal-conteudo">
-        <span class="fechar-modal" onclick="toggleTemaModal(false)">&times;</span>
-        <strong>🎨 TEMAS VISUAIS</strong>
-        <button class="btn-loja" onclick="mudarTema('theme-neon')">🔷 NEON AZUL</button>
-        <button class="btn-loja" onclick="mudarTema('theme-cyberpunk')">💖 CYBERPUNK ROSA</button>
-        <button class="btn-loja" onclick="mudarTema('theme-matrix')">🟢 MATRIX VERDE</button>
-        <button class="btn-loja" onclick="mudarTema('theme-retro')">🟡 RETRO AMARELO</button>
+<!-- MODAL TEMAS -->
+<div id="modalTemas" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>🎨 Escolha o Tema</h3>
+        <button class="btn" onclick="mudarTema('')">Padrão Dark</button><br><br>
+        <button class="btn" onclick="mudarTema('tema-neon')">Neon Cyber</button><br><br>
+        <button class="btn" onclick="mudarTema('tema-retro')">Retro Gold</button><br><br>
+        <button class="btn btn-secondary" onclick="toggleTemaModal(false)">Fechar</button>
     </div>
 </div>
 
@@ -381,6 +396,7 @@
     let chutesNoLevel = 0, totalChutesGerais = 0;
     let tempoInicio = 0, tempoGasto = 0, timerInterval = null, tempoRestanteLvl = 20;
     let historicoChutes = [];
+    let pontuacaoTotalCampanha = 0;
 
     let relampagoPontos = 0;
     let relampagoTempoRestante = 60;
@@ -394,17 +410,13 @@
 
     function $(id) { return document.getElementById(id); }
 
-    // CARREGAR OS 3 RANKINGS SEPARADOS DO FIREBASE
     function carregarRankings() {
-        // 1. Campanha
         db.ref("ranking").orderByChild("modo").equalTo("campanha").limitToLast(5).on("value", (snapshot) => {
             preencherListaRank(snapshot, "lista-campanha", "pts");
         });
-        // 2. Duelo
         db.ref("ranking").orderByChild("modo").equalTo("duelo").limitToLast(5).on("value", (snapshot) => {
             preencherListaRank(snapshot, "lista-duelo", "pts");
         });
-        // 3. Relâmpago
         db.ref("ranking").orderByChild("modo").equalTo("relampago").limitToLast(5).on("value", (snapshot) => {
             preencherListaRank(snapshot, "lista-relampago", "pts");
         });
@@ -422,9 +434,9 @@
 
         let html = "";
         arrayValores.forEach((p, index) => {
-            html += `<li class="podio-${index < 3 ? index : 'x'}">
+            html += `<li style="display:flex; justify-content:space-between; padding:5px 0;">
                 <span>#${index+1} ${p.nome}</span>
-                <span>${p.score} ${unidade}</span>
+                <span><strong>${p.score}</strong> ${unidade}</span>
             </li>`;
         });
         el.innerHTML = html;
@@ -449,6 +461,7 @@
         if (!p1 || (modoAtual === 2 && !p2)) return;
 
         moedas = 0; totalChutesGerais = 0; ativo = true; pVez = 1;
+        pontuacaoTotalCampanha = 0;
         $("t1").style.display = "none";
         $("hud-topo").style.display = "flex";
         irParaMapa();
@@ -539,18 +552,18 @@
         for (let i = 1; i <= 10; i++) {
             let desbloqueado = i <= progresso.maxDesbloqueado;
             let card = document.createElement("div");
-            card.className = `card-level ${desbloqueado ? '' : 'bloqueado'} ${i === 10 ? 'lvl-10' : ''}`;
+            card.className = `card-level ${desbloqueado ? '' : 'bloqueado'}`;
             let pat = patentes[i];
 
             if (desbloqueado) {
                 card.innerHTML = `
-                    <div class="num-lvl">${i}</div>
-                    <div class="stars-lvl">${progresso.estrelas[i]}</div>
-                    <div class="tag-patente ${pat.classe}">${pat.icone} ${pat.nome}</div>
+                    <div style="font-weight:bold; font-size:18px;">${i}</div>
+                    <div style="font-size:12px;">${progresso.estrelas[i]}</div>
+                    <div class="${pat.classe}" style="font-size:10px;">${pat.icone} ${pat.nome}</div>
                 `;
                 card.onclick = () => { somClique(); iniciarNivel(i); };
             } else {
-                card.innerHTML = `<div class="cadeado-icon">🔒</div><div class="stars-lvl">---</div><div class="tag-patente" style="color:#555">${pat.nome}</div>`;
+                card.innerHTML = `<div style="font-size:18px;">🔒</div><div style="font-size:12px;">---</div><div style="font-size:10px; color:#555">${pat.nome}</div>`;
             }
             grid.appendChild(card);
         }
@@ -673,15 +686,18 @@
             if (tempoGasto < 5) desbloquearConquista("flash");
             if (lvl === 10) desbloquearConquista("mestre");
 
-            // Salvar no Ranking do Firebase de acordo com o modo
-            let modoStr = modoAtual === 1 ? "campanha" : "duelo";
-            let pontuacaoFinal = Math.max(10, 100 - (chutesNoLevel * 5) - (tempoGasto));
-            db.ref("ranking").push({
-                nome: jogadorAtual,
-                score: pontuacaoFinal,
-                modo: modoStr,
-                data: Date.now()
-            });
+            let pontuacaoFase = Math.max(10, 100 - (chutesNoLevel * 5) - (tempoGasto));
+            pontuacaoTotalCampanha += pontuacaoFase;
+
+            if (lvl === 10) {
+                let modoStr = modoAtual === 1 ? "campanha" : "duelo";
+                db.ref("ranking").push({
+                    nome: jogadorAtual,
+                    score: pontuacaoTotalCampanha,
+                    modo: modoStr,
+                    data: Date.now()
+                });
+            }
 
             historicoChutes.unshift({ numero: p, dica: "ACERTOU!" });
             atualizarPainelChutes();
@@ -689,22 +705,39 @@
         } else {
             somErro();
             let dicaTexto = p < num ? "MAIOR ↑" : "MENOR ↓";
+            m.style.color = p < num ? "#00ffaa" : "#ff9900";
+            m.textContent = `O número é ${dicaTexto}`;
+
             historicoChutes.unshift({ numero: p, dica: dicaTexto });
             atualizarPainelChutes();
 
-            if (ch === 0) {
+            if (ch <= 0) {
                 clearInterval(timerInterval);
+                m.style.color = "#ff0055";
+                m.textContent = `GAMEOVER! O número era ${num}`;
                 $("btn-chutar").disabled = true;
-                stats.partidas++; atualizarStats();
-                m.style.color = "#ff0000"; 
-                m.textContent = `GAME OVER! ${jogadorAtual} errou. Era ${num}.`;
-                setTimeout(irParaMapa, 2500);
+                stats.partidas++;
+                atualizarStats();
             } else {
-                m.style.color = "#00ffff"; m.textContent = dicaTexto;
-                if (modoAtual === 2) pVez = pVez === 1 ? 2 : 1;
-                ui();
+                $("status").textContent = `Chances Restantes: ${ch}`;
+                if (modoAtual === 2) {
+                    pVez = pVez === 1 ? 2 : 1;
+                    $("vez-player").textContent = `TURNO DE: ${pVez === 1 ? p1 : p2}`;
+                }
             }
         }
+        $("chute").value = "";
+        $("chute").focus();
+    }
+
+    function gameOverTempo() {
+        somErro();
+        let m = $("msg");
+        m.style.color = "#ff0055";
+        m.textContent = `TEMPO ESGOTADO! O número era ${num}`;
+        $("btn-chutar").disabled = true;
+        stats.partidas++;
+        atualizarStats();
     }
 
     function atualizarPainelChutes() {
@@ -715,8 +748,8 @@
         }
         let html = "";
         historicoChutes.forEach(item => {
-            let classeDica = item.dica.includes("MAIOR") ? "dica-maior" : (item.dica.includes("MENOR") ? "dica-menor" : "derrota-tag");
-            html += `<li><span>Nº <strong>${item.numero}</strong></span><span class="${classeDica}">${item.dica}</span></li>`;
+            let classe = item.dica.includes("MAIOR") ? "dica-maior" : (item.dica.includes("MENOR") ? "dica-menor" : "");
+            html += `<li><span>Chute: <strong>${item.numero}</strong></span> <span class="${classe}">${item.dica}</span></li>`;
         });
         lista.innerHTML = html;
     }
@@ -724,16 +757,8 @@
     function atualizarStats() {
         $("st-partidas").textContent = stats.partidas;
         $("st-vitorias").textContent = stats.vitorias;
-        let tx = stats.partidas > 0 ? Math.round((stats.vitorias / stats.partidas) * 100) : 0;
-        $("st-taxa").textContent = `${tx}%`;
-    }
-
-    function gameOverTempo() {
-        $("btn-chutar").disabled = true;
-        somErro();
-        stats.partidas++; atualizarStats();
-        $("msg").style.color = "#ff0000"; $("msg").textContent = `⏱️ TEMPO ACABOU! Era ${num}.`;
-        setTimeout(irParaMapa, 2500);
+        let taxa = stats.partidas > 0 ? Math.round((stats.vitorias / stats.partidas) * 100) : 0;
+        $("st-taxa").textContent = `${taxa}%`;
     }
 
     function exibirResultadoLevel() {
@@ -741,63 +766,63 @@
         $("painel-chutes").style.display = "none";
         $("t-res").style.display = "flex";
 
-        const config = configuracaoNiveis[lvl];
-        let estrelas = "⭐";
-        if (ch >= Math.floor(config.chances * 0.6)) estrelas = "⭐⭐⭐";
-        else if (ch >= Math.floor(config.chances * 0.3)) estrelas = "⭐⭐";
+        let config = configuracaoNiveis[lvl];
+        let estrelasCount = 1;
+        if (chutesNoLevel <= Math.ceil(config.chances / 3)) estrelasCount = 3;
+        else if (chutesNoLevel <= Math.ceil(config.chances / 1.5)) estrelasCount = 2;
 
-        progresso.estrelas[lvl] = estrelas;
-        if (lvl < 10 && progresso.maxDesbloqueado < lvl + 1) progresso.maxDesbloqueado = lvl + 1;
+        let strEstrelas = "⭐".repeat(estrelasCount) + "☆".repeat(3 - estrelasCount);
+        progresso.estrelas[lvl] = strEstrelas;
+
+        if (lvl === progresso.maxDesbloqueado && progresso.maxDesbloqueado < 10) {
+            progresso.maxDesbloqueado++;
+        }
 
         let patInfo = patentes[lvl];
-        
-        $("res-titulo").textContent = `LEVEL ${lvl} CONCLUÍDO!`;
-        $("res-estrelas").textContent = estrelas;
+        $("res-titulo").textContent = lvl === 10 ? "JOGO ZERADO!" : `LEVEL ${lvl} CONCLUÍDO!`;
+        $("res-estrelas").textContent = strEstrelas;
         $("res-patente").innerHTML = `🏅 Patente: <span class="${patInfo.classe}">${patInfo.icone} ${patInfo.nome}</span>`;
         $("res-chutes").textContent = `🎯 Chutes Usados: ${chutesNoLevel}`;
         $("res-tempo").textContent = `⏱️ Tempo: ${tempoGasto}s`;
-    }
-
-    function desbloquearConquista(id) {
-        if (!conquistasDesbloqueadas.has(id)) conquistasDesbloqueadas.add(id);
     }
 
     function abrirConquistas() {
         somClique();
         $("t-map").style.display = "none";
         $("t-conquistas").style.display = "flex";
-        let ul = $("lista-conquistas");
-        ul.innerHTML = "";
+
+        let lista = $("lista-conquistas");
+        lista.innerHTML = "";
         conquistasLista.forEach(c => {
-            let ok = conquistasDesbloqueadas.has(c.id);
-            ul.innerHTML += `
-                <li style="opacity: ${ok ? '1' : '0.4'}; background:#151515;">
-                    <div style="text-align:left;">
-                        <strong style="margin:0; text-align:left; color:${ok ? 'var(--primary)' : '#888'}">${c.nome}</strong>
+            let desbloqueada = conquistasDesbloqueadas.has(c.id);
+            lista.innerHTML += `
+                <li style="opacity: ${desbloqueada ? '1' : '0.4'}">
+                    <div>
+                        <strong>${c.nome}</strong>
                         <div style="font-size:10px; color:#aaa;">${c.desc}</div>
                     </div>
-                    <span>${ok ? '✅' : '🔒'}</span>
-                </li>`;
+                    <span>${desbloqueada ? '✅' : '🔒'}</span>
+                </li>
+            `;
         });
+    }
+
+    function desbloquearConquista(id) {
+        if (!conquistasDesbloqueadas.has(id)) {
+            conquistasDesbloqueadas.add(id);
+        }
     }
 
     function voltarMenu() {
         somClique();
         clearInterval(timerInterval);
         clearInterval(relampagoTimer);
-        ativo = false;
-        toggleLoja(false);
-        $("hud-topo").style.display = "none";
+        $("t-map").style.display = "none";
         $("t2").style.display = "none";
-        $("t-res").style.display = "none";
-        $("t-conquistas").style.display = "none";
         $("t-relampago").style.display = "none";
         $("painel-chutes").style.display = "none";
-        $("t-map").style.display = "none";
+        $("hud-topo").style.display = "none";
         $("t0").style.display = "flex";
-        $("nick1").value = ""; $("nick2").value = "";
-        progresso.maxDesbloqueado = 1;
-        progresso.estrelas = { 1: "---", 2: "---", 3: "---", 4: "---", 5: "---", 6: "---", 7: "---", 8: "---", 9: "---", 10: "---" };
     }
 </script>
 </body>
