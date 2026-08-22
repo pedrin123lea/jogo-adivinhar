@@ -19,9 +19,7 @@
         }
 
         body {
-            background-color: #080808;
-            background-image: repeating-linear-gradient(0deg, #000 0px, #000 1px, transparent 1px, transparent 2px);
-            background-size: 100% 3px;
+            background-color: #000000;
             color: #ffffff;
             min-height: 100vh;
             display: flex;
@@ -122,19 +120,20 @@
         /* CONTAINER CENTRAL */
         .main-container {
             width: 100%;
-            max-width: 500px;
+            max-width: 450px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 25px;
+            gap: 20px;
         }
 
         .titulo-secao {
             color: #00d8ff;
-            font-size: 18px;
+            font-size: 22px;
             letter-spacing: 2px;
             font-weight: bold;
             text-transform: uppercase;
+            text-align: center;
         }
 
         /* GRID DE FASES (3 COLUNAS) */
@@ -148,7 +147,7 @@
 
         .card-fase {
             aspect-ratio: 1;
-            background: #080808;
+            background: #000;
             border: 2px solid #222;
             border-radius: 12px;
             display: flex;
@@ -163,10 +162,6 @@
         .card-fase.ativa {
             border-color: #00d8ff;
             box-shadow: 0 0 12px rgba(0, 216, 255, 0.4);
-        }
-
-        .card-fase.derrota {
-            border-color: #501015;
         }
 
         .num-fase {
@@ -185,26 +180,39 @@
             font-size: 12px;
         }
 
-        /* BOTÃO SAIR / AÇÕES */
+        /* BOTÕES DE MENU E AÇÕES */
         .btn-acao {
-            background: #080808;
-            border: 2px solid #333;
-            color: #aaa;
-            padding: 10px 30px;
+            background: #000;
+            border: 2px solid #00d8ff;
+            color: #00d8ff;
+            padding: 12px 20px;
             border-radius: 8px;
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             letter-spacing: 1px;
+            width: 100%;
+            text-transform: uppercase;
             transition: 0.2s;
         }
 
         .btn-acao:hover {
-            border-color: #00d8ff;
-            color: #fff;
+            background: #00d8ff;
+            color: #000;
         }
 
-        /* TELAS SECUNDÁRIAS / INPUTS */
+        .btn-secundario {
+            border-color: #333;
+            color: #aaa;
+        }
+
+        .btn-secundario:hover {
+            border-color: #fff;
+            color: #fff;
+            background: transparent;
+        }
+
+        /* INPUTS */
         input[type="text"], input[type="number"] {
             background: #000;
             border: 2px solid #00d8ff;
@@ -215,26 +223,26 @@
             text-align: center;
             outline: none;
             width: 100%;
-            max-width: 300px;
         }
 
         .modal-loja {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 15px;
             z-index: 100;
+            padding: 20px;
         }
     </style>
 </head>
 <body>
 
     <!-- HUD TOPO -->
-    <div class="topo-esquerda">
+    <div class="topo-esquerda" id="hud-topo" style="display: none;">
         <button class="btn-carrinho" onclick="toggleLoja(true)">🛒</button>
         <div class="hud-moedas">
             <span style="background: #ffcc00; color: #000; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">$</span>
@@ -251,28 +259,44 @@
         </div>
     </div>
 
-    <!-- MAIN CONTAINER -->
-    <div class="main-container" id="tela-mapa">
-        <div class="titulo-secao">SELEÇÃO DE FASES</div>
-
-        <div class="grid-fases" id="grid-levels"></div>
-
-        <button class="btn-acao" onclick="voltarMenu()">SAIR</button>
+    <!-- TELA 0: INÍCIO / MENU PRINCIPAL -->
+    <div class="main-container" id="tela-inicio">
+        <div class="titulo-secao">ADIVINHE O NÚMERO</div>
+        <button class="btn-acao" onclick="selecionarModo(1)">Modo Campanha</button>
+        <button class="btn-acao" onclick="selecionarModo(2)">Modo Duelo 1v1</button>
+        <button class="btn-acao" style="border-color: #ffcc00; color: #ffcc00;" onclick="iniciarRelampago()">Modo Relâmpago ⚡</button>
     </div>
 
-    <!-- TELA DE JOGO -->
+    <!-- TELA 1: NOME / LOGIN -->
+    <div class="main-container" id="tela-login" style="display: none;">
+        <div class="titulo-secao" id="titulo-login">SEU NOME</div>
+        <input type="text" id="nick1" placeholder="Nome Jogador 1" maxlength="12">
+        <input type="text" id="nick2" placeholder="Nome Jogador 2" maxlength="12" style="display: none;">
+        <button class="btn-acao" onclick="iniciarJogo()">JOGAR</button>
+        <button class="btn-acao btn-secundario" onclick="voltarMenu()">VOLTAR</button>
+    </div>
+
+    <!-- TELA 2: SELEÇÃO DE FASES (MAPA) -->
+    <div class="main-container" id="tela-mapa" style="display: none;">
+        <div class="titulo-secao">SELEÇÃO DE FASES</div>
+        <div class="grid-fases" id="grid-levels"></div>
+        <button class="btn-acao btn-secundario" onclick="voltarMenu()">SAIR</button>
+    </div>
+
+    <!-- TELA 3: JOGO -->
     <div class="main-container" id="tela-jogo" style="display: none;">
         <div class="titulo-secao" id="lvl-titulo">LEVEL 1</div>
         <p id="instrucao-jogo" style="color: #aaa; font-size: 14px;">Adivinhe o número</p>
-        
+        <div id="vez-player" style="color: #ffcc00; font-size: 13px;"></div>
+
         <input type="number" id="chute" placeholder="Seu palpite">
-        <button class="btn-acao" style="border-color: #00d8ff; color: #00d8ff;" id="btn-chutar" onclick="chutar()">CHUTAR</button>
+        <button class="btn-acao" id="btn-chutar" onclick="chutar()">CHUTAR</button>
 
         <p id="status-chances" style="color: #ffcc00; font-size: 13px;"></p>
         <p id="msg-feedback" style="font-weight: bold; font-size: 15px; min-height: 20px;"></p>
         <p id="info-dica" style="color: #00d8ff; font-size: 13px;"></p>
 
-        <button class="btn-acao" onclick="irParaMapa()">VOLTAR</button>
+        <button class="btn-acao btn-secundario" onclick="irParaMapa()">VOLTAR</button>
     </div>
 
     <!-- MODAL LOJA -->
@@ -297,6 +321,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        let modoAtual = 1, p1 = "", p2 = "", pVez = 1;
         let lvl = 1, num = 0, ch = 0, maxNum = 15, moedas = 0;
         let chutesNoLevel = 0, pontuacaoTotal = 0;
         let progresso = { maxDesbloqueado: 1 };
@@ -323,13 +348,37 @@
         }
         carregarRankings();
 
+        function selecionarModo(m) {
+            modoAtual = m;
+            $("tela-inicio").style.display = "none";
+            $("tela-login").style.display = "flex";
+            $("titulo-login").textContent = m === 2 ? "JOGADORES 1v1" : "SEU NOME";
+            $("nick2").style.display = m === 2 ? "block" : "none";
+        }
+
+        function iniciarJogo() {
+            p1 = $("nick1").value.trim();
+            p2 = $("nick2").value.trim();
+            if (!p1 || (modoAtual === 2 && !p2)) return;
+
+            $("tela-login").style.display = "none";
+            $("hud-topo").style.display = "flex";
+            irParaMapa();
+        }
+
+        function irParaMapa() {
+            $("tela-jogo").style.display = "none";
+            $("tela-mapa").style.display = "flex";
+            renderizarMapa();
+        }
+
         function renderizarMapa() {
             let grid = $("grid-levels");
             grid.innerHTML = "";
             for (let i = 1; i <= 6; i++) {
                 let desbloqueado = i <= progresso.maxDesbloqueado;
                 let card = document.createElement("div");
-                card.className = `card-fase ${desbloqueado ? (i === 1 ? 'ativa' : '') : 'derrota'}`;
+                card.className = `card-fase ${desbloqueado ? 'ativa' : ''}`;
                 
                 if (desbloqueado) {
                     card.innerHTML = `<div class="num-fase">${i}</div><div class="sub-fase">---</div>`;
@@ -353,6 +402,7 @@
             $("lvl-titulo").textContent = `LEVEL ${lvl}`;
             $("instrucao-jogo").textContent = `Adivinhe de 1 a ${maxNum}`;
             $("status-chances").textContent = `Chances: ${ch}`;
+            $("vez-player").textContent = modoAtual === 2 ? `TURNO DE: ${pVez === 1 ? p1 : p2}` : "";
             $("msg-feedback").textContent = "";
             $("info-dica").textContent = "";
             $("chute").value = "";
@@ -382,9 +432,9 @@
 
                 // Salva no banco APENAS no ZERAR (Level 6)
                 if (lvl === 6) {
-                    let nome = prompt("Você zerou! Digite seu nome para o ranking:", "Jogador") || "Jogador";
+                    let nomeFinal = modoAtual === 2 ? (pVez === 1 ? p1 : p2) : p1;
                     db.ref("ranking").push({
-                        nome: nome,
+                        nome: nomeFinal,
                         score: pontuacaoTotal,
                         data: Date.now()
                     });
@@ -395,6 +445,11 @@
                 $("msg-feedback").style.color = "#ff0055";
                 $("msg-feedback").textContent = p < num ? "MAIOR ↑" : "MENOR ↓";
 
+                if (modoAtual === 2) {
+                    pVez = pVez === 1 ? 2 : 1;
+                    $("vez-player").textContent = `TURNO DE: ${pVez === 1 ? p1 : p2}`;
+                }
+
                 if (ch <= 0) {
                     $("msg-feedback").textContent = `GAMEOVER! Era ${num}`;
                     $("btn-chutar").disabled = true;
@@ -402,12 +457,6 @@
                 }
             }
             $("chute").value = "";
-        }
-
-        function irParaMapa() {
-            $("tela-jogo").style.display = "none";
-            $("tela-mapa").style.display = "flex";
-            renderizarMapa();
         }
 
         function toggleLoja(abrir) {
@@ -430,11 +479,20 @@
             toggleLoja(false);
         }
 
-        function voltarMenu() {
-            alert("Saindo do jogo...");
+        function iniciarRelampago() {
+            let nome = prompt("Seu nome para o Relâmpago:", "Visitante") || "Visitante";
+            p1 = nome;
+            modoAtual = 1;
+            iniciarNivel(1);
         }
 
-        renderizarMapa();
+        function voltarMenu() {
+            $("tela-mapa").style.display = "none";
+            $("tela-login").style.display = "none";
+            $("tela-jogo").style.display = "none";
+            $("hud-topo").style.display = "none";
+            $("tela-inicio").style.display = "flex";
+        }
     </script>
 </body>
 </html>
